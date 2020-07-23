@@ -205,6 +205,7 @@ int main(int argc, char** argv)
   // ros::Subscriber true_pose_sub = nh.subscribe("/posUpdate", 1, posUpdateCallback);
 
   ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
+  // ros::Publisher odomStatus=nh.advertise<std_msgs::Int64>("localization/status",100);
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformListener tf_listener_;
 
@@ -248,7 +249,7 @@ int main(int argc, char** argv)
     {
       delta_x = 0.0;
       delta_y = 0.0;
-      delta_z=0.0;
+      delta_z = 0.0;
       delta_yaw=0.0;
       // delta_yaw2=0.0;
       delta_pitch=0.0;
@@ -514,12 +515,12 @@ void imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
 
 
 
-  // double rollTruth, pitchTruth,yawTruth;
+  double rollOrient, pitchOrient,yawOrient;
   //
-  // tf::Quaternion q(msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
+  tf::Quaternion q(msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
   //
-  // tf::Matrix3x3 m(q);
-  // m.getRPY(rollTruth, pitchTruth, yawTruth);
+  tf::Matrix3x3 m(q);
+  m.getRPY(rollOrient, pitchOrient, yawOrient);
 
   if(first_callback)
   {

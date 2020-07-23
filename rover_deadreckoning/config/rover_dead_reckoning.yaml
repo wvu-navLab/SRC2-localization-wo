@@ -9,7 +9,7 @@ initPosz: 0.0
 initRoll: 0.0
 initPitch: 0.0
 initYaw: 0.0
-imu_topic_name : "/scout_1/imu_filtered"
+imu_topic_name : "/scout_1/imu"
 odometry_out_topic_name : "/dead_reckoning/odometry"
 joint_state_topic_name : "/scout_1/joint_states"
 odometry_frame_id : "odom"
