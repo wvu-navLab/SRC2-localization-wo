@@ -50,6 +50,7 @@ bool call_true_pose = true;
 double imu_time;
 double imu_time_prev;
 double yaw = 0.0;
+double heading=0.0;
 double pitch=0.0;
 double roll=0.0;
 double yawTruth = 0.0;
@@ -67,12 +68,9 @@ double orient_w=1.0;
 // Declare sensor callback functions
 void imuCallback(const sensor_msgs::Imu::ConstPtr& msg);
 void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
-// void posUpdateCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
-// void gazebostateCallback(const gazebo_msgs::ModelStates::ConstPtr& msg);
 int main(int argc, char** argv)
 {
-  // Declare variables that are read from params in 'rover_localization/config/dead_reckoning.yaml'
   float loop_rate; // Hz
   double wheel_diameter; // m
   double wheel_base; // m
@@ -86,6 +84,7 @@ int main(int argc, char** argv)
   double initRoll;//rad
   std::string imu_topic_name;
   std::string odometry_out_topic_name;
+  std::string kimera_odometry_out_topic_name;
   std::string joint_state_topic_name;
   std::string odometry_frame_id;
   std::string odometry_child_frame_id;
@@ -174,6 +173,12 @@ int main(int argc, char** argv)
       ros::shutdown();
       exit(1);
     }
+    if(ros::param::get(node_name+"/kimera_odometry_out_topic_name",kimera_odometry_out_topic_name)==false)
+    {
+      ROS_FATAL("No parameter 'kimera_odometry_out_topic_name' specified");
+      ros::shutdown();
+      exit(1);
+    }
     if(ros::param::get(node_name+"/joint_state_topic_name",joint_state_topic_name)==false)
     {
       ROS_FATAL("No parameter 'joint_state_topic_name' specified");
@@ -205,12 +210,14 @@ int main(int argc, char** argv)
   // ros::Subscriber true_pose_sub = nh.subscribe("/posUpdate", 1, posUpdateCallback);
 
   ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
+  ros::Publisher kimera_odom_pub = nh.advertise<nav_msgs::Odometry>(kimera_odometry_out_topic_name, 1);
   // ros::Publisher odomStatus=nh.advertise<std_msgs::Int64>("localization/status",100);
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformListener tf_listener_;
 
   // Initialize states
   nav_msgs::Odometry odom_msg; // Initializes to all zero, by default
+  // nav_msgs::Odometry kimera_odom_msg;
   ros::Rate rate(loop_rate);
   ros::Time current_time, last_time;
   current_time = ros::Time::now();
@@ -251,7 +258,6 @@ int main(int argc, char** argv)
       delta_y = 0.0;
       delta_z = 0.0;
       delta_yaw=0.0;
-      // delta_yaw2=0.0;
       delta_pitch=0.0;
       delta_roll=0.0;
       yaw=initYaw; // initialize yaw
@@ -296,91 +302,6 @@ int main(int argc, char** argv)
       else
       {
 
-        // tf::StampedTransform T_fl2bl;
-        // try
-        // {
-        //   tf_listener_.waitForTransform("/scout_1_tf/fl_wheel", "/scout_1_tf/bl_wheel",ros::Time(0),ros::Duration(1.0));
-        //   tf_listener_.lookupTransform("/scout_1_tf/fl_wheel", "/scout_1_tf/bl_wheel",ros::Time(0),T_fl2bl);
-        // }
-        // catch(tf::TransformException &ex)
-        // {
-        //   ROS_WARN("%s", ex.what());
-        // }
-        // // tf::Vector3
-        // tf::Vector3 t_fl2bl = T_fl2bl.getOrigin();
-        // geometry_msgs::Point d_fl2bl;
-        // d_fl2bl.x = t_fl2bl.getX(); //copy the components into geometry_msgs type
-        // d_fl2bl.y = t_fl2bl.getY();
-        // d_fl2bl.z = t_fl2bl.getZ();
-        // //
-        // double wheel_base_l = sqrt(d_fl2bl.x*d_fl2bl.x +d_fl2bl.y*d_fl2bl.y+ d_fl2bl.z*d_fl2bl.z);
-        //
-        // tf::StampedTransform T_fr2br;
-        // try
-        // {
-        //   tf_listener_.waitForTransform("/scout_1_tf/fr_wheel", "/scout_1_tf/br_wheel",ros::Time(0),ros::Duration(1.0));
-        //   tf_listener_.lookupTransform("/scout_1_tf/fr_wheel", "/scout_1_tf/br_wheel",ros::Time(0),T_fr2br);
-        // }
-        // catch(tf::TransformException &ex)
-        // {
-        //   ROS_WARN("%s", ex.what());
-        // }
-        // // tf::Vector3
-        // tf::Vector3 t_fr2br = T_fr2br.getOrigin();
-        // geometry_msgs::Point d_fr2br;
-        // d_fr2br.x = t_fr2br.getX(); //copy the components into geometry_msgs type
-        // d_fr2br.y = t_fr2br.getY();
-        // d_fr2br.z = t_fr2br.getZ();
-        // //
-        // double wheel_base_r = sqrt(d_fr2br.x*d_fr2br.x +d_fr2br.y*d_fr2br.y+ d_fr2br.z*d_fr2br.z);
-        //
-        //
-        //
-        // tf::StampedTransform T_fl2fr;
-        // try
-        // {
-        //   tf_listener_.waitForTransform("/scout_1_tf/fr_wheel", "/scout_1_tf/fl_wheel",ros::Time(0),ros::Duration(1.0));
-        //   tf_listener_.lookupTransform("/scout_1_tf/fr_wheel", "/scout_1_tf/fl_wheel",ros::Time(0),T_fl2fr);
-        // }
-        // catch(tf::TransformException &ex)
-        // {
-        //   ROS_WARN("%s", ex.what());
-        // }
-        // // tf::Vector3
-        // tf::Vector3 t_fl2fr = T_fl2fr.getOrigin();
-        // geometry_msgs::Point d_fl2fr;
-        // d_fl2fr.x = t_fl2fr.getX(); //copy the components into geometry_msgs type
-        // d_fl2fr.y = t_fl2fr.getY();
-        // d_fl2fr.z = t_fl2fr.getZ();
-        // //
-        // double steering_track_f = sqrt(d_fl2fr.x*d_fl2fr.x +d_fl2fr.y*d_fl2fr.y+ d_fl2fr.z*d_fl2fr.z);
-        //
-        // tf::StampedTransform T_bl2br;
-        // try
-        // {
-        //   tf_listener_.waitForTransform("/scout_1_tf/bl_wheel", "/scout_1_tf/br_wheel",ros::Time(0),ros::Duration(1.0));
-        //   tf_listener_.lookupTransform("/scout_1_tf/bl_wheel", "/scout_1_tf/br_wheel",ros::Time(0),T_bl2br);
-        // }
-        // catch(tf::TransformException &ex)
-        // {
-        //   ROS_WARN("%s", ex.what());
-        // }
-        // // tf::Vector3
-        // tf::Vector3 t_bl2br = T_bl2br.getOrigin();
-        // geometry_msgs::Point d_bl2br;
-        // d_bl2br.x = t_bl2br.getX(); //copy the components into geometry_msgs type
-        // d_bl2br.y = t_bl2br.getY();
-        // d_bl2br.z = t_bl2br.getZ();
-        // //
-        // double steering_track_r = sqrt(d_bl2br.x*d_bl2br.x +d_bl2br.y*d_bl2br.y+ d_fl2fr.z*d_bl2br.z);
-        //
-        //
-        //
-        // wheel_base = (wheel_base_l+wheel_base_r)/2.0;
-        // steering_track = (steering_track_f+steering_track_r)/2.0;
-
-
-
         //
         front_steering_angle = 2/((1/tan(fl_wheel_steer))+(1/tan(fr_wheel_steer)));
         rear_steering_angle = 2/((1/tan(bl_wheel_steer))+(1/tan(br_wheel_steer)));
@@ -401,39 +322,27 @@ int main(int argc, char** argv)
         rear_linear_speed = (wheel_diameter/2.0)  * copysign(1.0, bl_speed_tmp+br_speed_tmp)*sqrt((pow(bl_speed_tmp,2)+pow(br_speed_tmp,2))/(2+pow(steering_track*rear_tmp,2)/2.0));
 
 
-
-
-      // front_steering_angle = 2/((1/tan(fl_wheel_steer))+(1/tan(fr_wheel_steer)));
-      // rear_steering_angle = 2/((1/tan(bl_wheel_steer))+(1/tan(br_wheel_steer)));
-      // front_tmp = cos(front_steering_angle)*(tan(front_steering_angle)-tan(rear_steering_angle))/wheel_base;
-      // front_linear_speed = (wheel_diameter/2.0) * copysign(1.0, fl_wheel_vel+fr_wheel_vel)*sqrt((pow(fl_wheel_vel,2)+pow(fr_wheel_vel,2))/(2+pow(steering_track*front_tmp,2)/2.0));
-      // rear_tmp = cos(rear_steering_angle)*(tan(front_steering_angle)-tan(rear_steering_angle))/wheel_base;
-      // rear_linear_speed = (wheel_diameter/2.0) * copysign(1.0, bl_wheel_vel+br_wheel_vel)*sqrt((pow(bl_wheel_vel,2)+pow(br_wheel_vel,2))/(2+pow(steering_track*rear_tmp,2)/2.0));
-
-
-
       // Compute yaw and delta distances
       angular= (front_linear_speed*front_tmp + rear_linear_speed*rear_tmp)/2.0; //wheel speed
 
       yaw += delta_yaw; //imu
       pitch=delta_pitch;
       roll=delta_roll;
-      velocity_x = (front_linear_speed*cos(front_steering_angle) + rear_linear_speed*cos(rear_steering_angle))/2.0;//robot_body_vel*cos(yaw);
-      velocity_y = (front_linear_speed*sin(front_steering_angle) - wheel_base*yaw/2.0+ rear_linear_speed*sin(rear_steering_angle) + wheel_base*yaw/2.0)/2.0;
-      linear_vel =  copysign(1.0, rear_linear_speed)*sqrt(pow(velocity_x,2)+pow(velocity_y,2));
-      // velocity_z=-linear_vel*sin(pitch);
 
-      // delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw))/cos(pitch))*delta_time;
-      // delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw))/cos(pitch))*delta_time;
-      delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
-      delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
-      // delta_z=velocity_z*delta_time;
-      // std::cout << "pitch" << pitchTruth <<'\n';
+      velocity_x = (front_linear_speed*cos(front_steering_angle) + rear_linear_speed*cos(rear_steering_angle))/2.0;//robot_body_vel*cos(yaw);
+      velocity_y = (front_linear_speed*sin(front_steering_angle) + rear_linear_speed*sin(rear_steering_angle))/2.0;
+      linear_vel =  copysign(1.0, rear_linear_speed)*sqrt(pow(velocity_x,2)+pow(velocity_y,2));
+
+      // delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
+      // delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
+
+            delta_x=((velocity_x*cos(heading)-velocity_y*sin(heading)))*delta_time;
+            delta_y=((velocity_x*sin(heading)+velocity_y*cos(heading)))*delta_time;
+            heading +=angular*delta_time;
 
       delta_yaw = 0.0;
       }
-      // delta_pitch=0.0;
-      // delta_roll=0.0;
+
     }
 
     //tf broadcaster for odometry
@@ -464,6 +373,12 @@ int main(int argc, char** argv)
     odom_msg.twist.twist.angular.z = yaw_rate;
 
     odom_pub.publish(odom_msg);
+
+    if (!call_true_pose) {
+      kimera_odom_pub.publish(odom_msg);
+    }
+
+
     ros::spinOnce();
     last_time = current_time;
     rate.sleep();
@@ -524,8 +439,7 @@ void imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
 
   if(first_callback)
   {
-    // delta_roll=0.0;
-    // delta_pitch=0.0;
+
     delta_yaw = 0.0;
     roll_rate =0.0;
     pitch_rate=0.0;
