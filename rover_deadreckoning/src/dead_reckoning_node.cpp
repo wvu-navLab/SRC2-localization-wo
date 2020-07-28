@@ -349,7 +349,7 @@ int main(int argc, char** argv)
     geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromRollPitchYaw(roll,pitch,yaw);
     geometry_msgs::TransformStamped odom_trans;
     odom_trans.header.stamp = current_time;
-    odom_trans.header.frame_id = "odom";
+    odom_trans.header.frame_id = "/scout_1_tf/odom";
     odom_trans.child_frame_id = "scout_1_tf/chassis";
     odom_trans.transform.translation.x += delta_x;
     odom_trans.transform.translation.y += delta_y;
@@ -359,7 +359,7 @@ int main(int argc, char** argv)
     //odom publisher
     odom_msg.header.seq = seq;
     odom_msg.header.stamp = current_time;
-    odom_msg.header.frame_id = "odom";
+    odom_msg.header.frame_id = "/scout_1_tf/odom";
     odom_msg.pose.pose.position.x += delta_x;
     odom_msg.pose.pose.position.y += delta_y;
     odom_msg.pose.pose.position.z += delta_z;
