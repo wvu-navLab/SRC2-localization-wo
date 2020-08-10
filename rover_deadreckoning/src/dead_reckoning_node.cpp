@@ -346,6 +346,7 @@ int main(int argc, char** argv)
     }
 
     //tf broadcaster for odometry
+    /*
     geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromRollPitchYaw(roll,pitch,yaw);
     geometry_msgs::TransformStamped odom_trans;
     odom_trans.header.stamp = current_time;
@@ -355,16 +356,16 @@ int main(int argc, char** argv)
     odom_trans.transform.translation.y += delta_y;
     odom_trans.transform.translation.z += delta_z;
     odom_trans.transform.rotation = odom_quat;
-    odom_broadcaster.sendTransform(odom_trans);
+    odom_broadcaster.sendTransform(odom_trans);*/
     //odom publisher
     odom_msg.header.seq = seq;
     odom_msg.header.stamp = current_time;
-    odom_msg.header.frame_id = "/scout_1_tf/odom";
+    odom_msg.header.frame_id = odometry_frame_id;
     odom_msg.pose.pose.position.x += delta_x;
     odom_msg.pose.pose.position.y += delta_y;
     odom_msg.pose.pose.position.z += delta_z;
     odom_msg.pose.pose.orientation = odom_quat;
-    odom_msg.child_frame_id = "scout_1_tf/chassis";
+    odom_msg.child_frame_id = odometry_child_frame_id;
     odom_msg.twist.twist.linear.x = velocity_x;
     odom_msg.twist.twist.linear.y = velocity_y;
     odom_msg.twist.twist.linear.z = velocity_z;
