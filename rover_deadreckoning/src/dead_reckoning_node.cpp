@@ -336,8 +336,8 @@ int main(int argc, char** argv)
       // delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
       // delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
 
-            delta_x=((velocity_x*cos(heading)-velocity_y*sin(heading)))*delta_time;
-            delta_y=((velocity_x*sin(heading)+velocity_y*cos(heading)))*delta_time;
+            delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
+            delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
             heading +=angular*delta_time;
 
       delta_yaw = 0.0;
@@ -348,7 +348,7 @@ int main(int argc, char** argv)
     //tf broadcaster for odometry
 
     geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromRollPitchYaw(roll,pitch,yaw);
-   
+
 
     //odom publisher
     odom_msg.header.seq = seq;
