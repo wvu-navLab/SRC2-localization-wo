@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <stdio.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 #include <string>
@@ -384,25 +385,70 @@ int main(int argc, char** argv)
 
 void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-  bl_wheel_turn_counts_prev = bl_wheel_turn_counts;
-  bl_wheel_turn_counts = msg->position.at(2);
-  bl_wheel_vel= msg->velocity.at(2);
-  bl_wheel_steer= msg->position.at(1);
+    int fr_wheel_joint_idx;
+    int br_wheel_joint_idx;
+    int fl_wheel_joint_idx;
+    int bl_wheel_joint_idx;
+    int fr_steering_arm_joint_idx;
+    int br_steering_arm_joint_idx;
+    int fl_steering_arm_joint_idx;
+    int bl_steering_arm_joint_idx;
+    //loop joint states
+    for(int i=0; i<msg->name.size(); i++)
+    {
+        if(msg->name[i] == "fr_wheel_joint")
+        {
+            fr_wheel_joint_idx = i;
+        }
+        if(msg->name[i] == "br_wheel_joint")
+        {
+            br_wheel_joint_idx = i;
+        }
+        if(msg->name[i] == "fl_wheel_joint")
+        {
+            fl_wheel_joint_idx = i;
+        }
+        if(msg->name[i] == "bl_wheel_joint")
+        {
+            bl_wheel_joint_idx = i;
+        }
+        if(msg->name[i] == "fr_steering_arm_joint")
+        {
+            fr_steering_arm_joint_idx = i;
+        }
+        if(msg->name[i] == "br_steering_arm_joint")
+        {
+            br_steering_arm_joint_idx = i;
+        }
+        if(msg->name[i] == "fl_steering_arm_joint")
+        {
+            fl_steering_arm_joint_idx = i;
+        }
+        if(msg->name[i] == "bl_steering_arm_joint")
+        {
+            bl_steering_arm_joint_idx = i;
+        }
+    }
 
-  br_wheel_turn_counts_prev = br_wheel_turn_counts;
-  br_wheel_turn_counts = msg->position.at(5);
-  br_wheel_vel= msg->velocity.at(5);
-  br_wheel_steer= msg->position.at(4);
+    fr_wheel_turn_counts_prev = fr_wheel_turn_counts;
+    fr_wheel_turn_counts = msg->position[fr_wheel_joint_idx];
+    fr_wheel_vel= msg->velocity[fr_wheel_joint_idx];
+    fr_wheel_steer= msg->position[fr_steering_arm_joint_idx];
 
-  fl_wheel_turn_counts_prev = fl_wheel_turn_counts;
-  fl_wheel_turn_counts = msg->position.at(8);
-  fl_wheel_vel = msg->velocity.at(8);
-  fl_wheel_steer= msg->position.at(7);
+    br_wheel_turn_counts_prev = br_wheel_turn_counts;
+    br_wheel_turn_counts = msg->position[br_wheel_joint_idx];
+    br_wheel_vel= msg->velocity[br_wheel_joint_idx];
+    br_wheel_steer= msg->position[br_steering_arm_joint_idx];
 
-  fr_wheel_turn_counts_prev = fr_wheel_turn_counts;
-  fr_wheel_turn_counts = msg->position.at(11);
-  fr_wheel_vel= msg->velocity.at(11);
-  fr_wheel_steer= msg->position.at(10);
+    fl_wheel_turn_counts_prev = fl_wheel_turn_counts;
+    fl_wheel_turn_counts = msg->position[fl_wheel_joint_idx];
+    fl_wheel_vel = msg->velocity[fl_wheel_joint_idx];
+    fl_wheel_steer= msg->position[fl_steering_arm_joint_idx];
+
+    bl_wheel_turn_counts_prev = bl_wheel_turn_counts;
+    bl_wheel_turn_counts = msg->position[bl_wheel_joint_idx];
+    bl_wheel_vel= msg->velocity[bl_wheel_joint_idx];
+    bl_wheel_steer= msg->position[bl_steering_arm_joint_idx];
 }
 
 void imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
