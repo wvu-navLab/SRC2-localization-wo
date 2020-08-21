@@ -280,15 +280,15 @@ int main(int argc, char** argv)
     {
       if (call_true_pose)
       {
-          if (nh.hasParam("/true_pose_x"))
+          if (nh.hasParam("true_pose_x"))
           {
-                    nh.getParam("/true_pose_x", delta_x);
-                    nh.getParam("/true_pose_y", delta_y);
-                    nh.getParam("/true_pose_z", delta_z);
-                    nh.getParam("/true_pose_orient_x", orient_x);
-                    nh.getParam("/true_pose_orient_y", orient_y);
-                    nh.getParam("/true_pose_orient_z", orient_z);
-                    nh.getParam("/true_pose_orient_w", orient_w);
+                    nh.getParam("true_pose_x", delta_x);
+                    nh.getParam("true_pose_y", delta_y);
+                    nh.getParam("true_pose_z", delta_z);
+                    nh.getParam("true_pose_orient_x", orient_x);
+                    nh.getParam("true_pose_orient_y", orient_y);
+                    nh.getParam("true_pose_orient_z", orient_z);
+                    nh.getParam("true_pose_orient_w", orient_w);
 
             tf::Quaternion q(orient_x,orient_y,orient_z,orient_w);
             tf::Matrix3x3 m(q.normalize());
