@@ -47,16 +47,16 @@ double delta_roll=0.0;
 
 
 bool first_callback = true;
-bool call_true_pose = true;
+// bool call_true_pose = true;
 double imu_time;
 double imu_time_prev;
 double yaw = 0.0;
 double heading=0.0;
 double pitch=0.0;
 double roll=0.0;
-double yawTruth = 0.0;
-double pitchTruth=0.0;
-double rollTruth=0.0;
+// double yawTruth = 0.0;
+// double pitchTruth=0.0;
+// double rollTruth=0.0;
 double pitchAcc=0.0;
 double rollAcc=0.0;
 double pos_x=0.0;
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
   double initRoll;//rad
   std::string imu_topic_name;
   std::string odometry_out_topic_name;
-  std::string kimera_odometry_out_topic_name;
+  // std::string kimera_odometry_out_topic_name;
   std::string joint_state_topic_name;
   std::string odometry_frame_id;
   std::string odometry_child_frame_id;
@@ -174,12 +174,12 @@ int main(int argc, char** argv)
       ros::shutdown();
       exit(1);
     }
-    if(ros::param::get(node_name+"/kimera_odometry_out_topic_name",kimera_odometry_out_topic_name)==false)
-    {
-      ROS_FATAL("No parameter 'kimera_odometry_out_topic_name' specified");
-      ros::shutdown();
-      exit(1);
-    }
+    // if(ros::param::get(node_name+"/kimera_odometry_out_topic_name",kimera_odometry_out_topic_name)==false)
+    // {
+    //   ROS_FATAL("No parameter 'kimera_odometry_out_topic_name' specified");
+    //   ros::shutdown();
+    //   exit(1);
+    // }
     if(ros::param::get(node_name+"/joint_state_topic_name",joint_state_topic_name)==false)
     {
       ROS_FATAL("No parameter 'joint_state_topic_name' specified");
@@ -211,7 +211,7 @@ int main(int argc, char** argv)
   // ros::Subscriber true_pose_sub = nh.subscribe("/posUpdate", 1, posUpdateCallback);
 
   ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
-  ros::Publisher kimera_odom_pub = nh.advertise<nav_msgs::Odometry>(kimera_odometry_out_topic_name, 1);
+  // ros::Publisher kimera_odom_pub = nh.advertise<nav_msgs::Odometry>(kimera_odometry_out_topic_name, 1);
   // ros::Publisher odomStatus=nh.advertise<std_msgs::Int64>("localization/status",100);
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformListener tf_listener_;
@@ -279,30 +279,6 @@ int main(int argc, char** argv)
     }
     else
     {
-      if (call_true_pose)
-      {
-          if (nh.hasParam("true_pose_x"))
-          {
-                    nh.getParam("true_pose_x", delta_x);
-                    nh.getParam("true_pose_y", delta_y);
-                    nh.getParam("true_pose_z", delta_z);
-                    nh.getParam("true_pose_orient_x", orient_x);
-                    nh.getParam("true_pose_orient_y", orient_y);
-                    nh.getParam("true_pose_orient_z", orient_z);
-                    nh.getParam("true_pose_orient_w", orient_w);
-
-            tf::Quaternion q(orient_x,orient_y,orient_z,orient_w);
-            tf::Matrix3x3 m(q.normalize());
-            m.getRPY(rollTruth, pitchTruth, yawTruth);
-            yaw=yawTruth;
-            pitch=pitchTruth;
-            roll=rollTruth;
-            call_true_pose=false;
-          }
-        }
-      else
-      {
-
         //
         front_steering_angle = 2/((1/tan(fl_wheel_steer))+(1/tan(fr_wheel_steer)));
         rear_steering_angle = 2/((1/tan(bl_wheel_steer))+(1/tan(br_wheel_steer)));
@@ -342,7 +318,7 @@ int main(int argc, char** argv)
             heading +=angular*delta_time;
 
       delta_yaw = 0.0;
-      }
+
 
     }
 
@@ -369,9 +345,6 @@ int main(int argc, char** argv)
 
     odom_pub.publish(odom_msg);
 
-    if (!call_true_pose) {
-      kimera_odom_pub.publish(odom_msg);
-    }
 
 
     ros::spinOnce();
