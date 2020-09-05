@@ -1,13 +1,12 @@
-#include <ros/ros.h>
-#include <stdio.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/Imu.h>
-#include <string>
 #include <math.h>
-#include <tf/transform_datatypes.h>
-#include <tf/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
+#include <ros/ros.h>
+#include <sensor_msgs/Imu.h>
 #include <sensor_msgs/JointState.h>
+#include <stdio.h>
+#include <string>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_datatypes.h>
 #include <tf/transform_listener.h>
 
 #define PI 3.14159265359
@@ -16,23 +15,23 @@
 double fl_wheel_turn_counts = 0.0;
 double fl_wheel_turn_counts_prev = 0.0;
 double fl_delta_counts = 0.0;
-double fl_wheel_steer=0.0;
-double fr_wheel_steer=0.0;
-double bl_wheel_steer=0.0;
-double br_wheel_steer=0.0;
-double fl_wheel_vel =0.0;
+double fl_wheel_steer = 0.0;
+double fr_wheel_steer = 0.0;
+double bl_wheel_steer = 0.0;
+double br_wheel_steer = 0.0;
+double fl_wheel_vel = 0.0;
 double bl_wheel_turn_counts = 0.0;
 double bl_wheel_turn_counts_prev = 0.0;
 double bl_delta_counts = 0.0;
-double bl_wheel_vel =0.0;
+double bl_wheel_vel = 0.0;
 double fr_wheel_turn_counts = 0.0;
 double fr_wheel_turn_counts_prev = 0.0;
 double fr_delta_counts = 0.0;
-double fr_wheel_vel =0.0;
+double fr_wheel_vel = 0.0;
 double br_wheel_turn_counts = 0.0;
 double br_wheel_turn_counts_prev = 0.0;
 double br_delta_counts = 0.0;
-double br_wheel_vel =0.0;
+double br_wheel_vel = 0.0;
 
 double yaw_rate = 0.0;
 double yaw_rate_prev = 0.0;
@@ -40,49 +39,47 @@ double pitch_rate = 0.0;
 double pitch_rate_prev = 0.0;
 double delta_yaw = 0.0;
 // double delta_yaw2 = 0.0;
-double delta_pitch =0.0;
-double roll_rate=0.0;
-double roll_rate_prev=0.0;
-double delta_roll=0.0;
-
+double delta_pitch = 0.0;
+double roll_rate = 0.0;
+double roll_rate_prev = 0.0;
+double delta_roll = 0.0;
 
 bool first_callback = true;
 // bool call_true_pose = true;
 double imu_time;
 double imu_time_prev;
 double yaw = 0.0;
-double heading=0.0;
-double pitch=0.0;
-double roll=0.0;
+double heading = 0.0;
+double pitch = 0.0;
+double roll = 0.0;
 // double yawTruth = 0.0;
 // double pitchTruth=0.0;
 // double rollTruth=0.0;
-double pitchAcc=0.0;
-double rollAcc=0.0;
-double pos_x=0.0;
-double pos_y=0.0;
-double pos_z=0.0;
-double orient_x=0.0;
-double orient_y=0.0;
-double orient_z=0.0;
-double orient_w=1.0;
+double pitchAcc = 0.0;
+double rollAcc = 0.0;
+double pos_x = 0.0;
+double pos_y = 0.0;
+double pos_z = 0.0;
+double orient_x = 0.0;
+double orient_y = 0.0;
+double orient_z = 0.0;
+double orient_w = 1.0;
 // Declare sensor callback functions
-void imuCallback(const sensor_msgs::Imu::ConstPtr& msg);
-void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
+void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg);
 
-int main(int argc, char** argv)
-{
-  float loop_rate; // Hz
-  double wheel_diameter; // m
-  double wheel_base; // m
-  double steering_track; //m
-  double wheel_steering_y_offset; //m
-  double initPosx; //m
-  double initPosy; //m
-  double initPosz; //m
-  double initYaw; //rad
-  double initPitch; //rad
-  double initRoll;//rad
+int main(int argc, char **argv) {
+  float loop_rate;                // Hz
+  double wheel_diameter;          // m
+  double wheel_base;              // m
+  double steering_track;          // m
+  double wheel_steering_y_offset; // m
+  double initPosx;                // m
+  double initPosy;                // m
+  double initPosz;                // m
+  double initYaw;                 // rad
+  double initPitch;               // rad
+  double initRoll;                // rad
   std::string imu_topic_name;
   std::string odometry_out_topic_name;
   // std::string kimera_odometry_out_topic_name;
@@ -96,123 +93,117 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
 
   // Read params from yaml file
-    if(ros::param::get(node_name+"/loop_rate",loop_rate)==false)
-    {
-      ROS_FATAL("No parameter 'loop_rate' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/wheel_diameter",wheel_diameter)==false)
-    {
-      ROS_FATAL("No parameter 'wheel_diameter' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/wheel_base",wheel_base)==false)
-    {
-      ROS_FATAL("No parameter 'wheel_base' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/steering_track",steering_track)==false)
-    {
-      ROS_FATAL("No parameter 'steering_track' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/wheel_steering_y_offset",wheel_steering_y_offset)==false)
-    {
-      ROS_FATAL("No parameter 'wheel_steering_y_offset' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/initPosx",initPosx)==false)
-    {
-      ROS_FATAL("No parameter 'initPosx' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/initPosy",initPosy )==false)
-    {
-      ROS_FATAL("No parameter 'initPosy' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/initPosz",initPosz)==false)
-    {
-      ROS_FATAL("No parameter 'initPosz' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/initYaw",initYaw)==false)
-    {
-      ROS_FATAL("No parameter 'initYaw' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/initPitch",initPitch)==false)
-    {
-      ROS_FATAL("No parameter 'initPitch' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/initRoll",initRoll)==false)
-    {
-      ROS_FATAL("No parameter 'initRoll' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/imu_topic_name",imu_topic_name)==false)
-    {
-      ROS_FATAL("No parameter 'imu_topic_name' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/odometry_out_topic_name",odometry_out_topic_name)==false)
-    {
-      ROS_FATAL("No parameter 'odometry_out_topic_name' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    // if(ros::param::get(node_name+"/kimera_odometry_out_topic_name",kimera_odometry_out_topic_name)==false)
-    // {
-    //   ROS_FATAL("No parameter 'kimera_odometry_out_topic_name' specified");
-    //   ros::shutdown();
-    //   exit(1);
-    // }
-    if(ros::param::get(node_name+"/joint_state_topic_name",joint_state_topic_name)==false)
-    {
-      ROS_FATAL("No parameter 'joint_state_topic_name' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/odometry_frame_id",odometry_frame_id)==false)
-    {
-      ROS_FATAL("No parameter 'odometry_frame_id' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/odometry_child_frame_id",odometry_child_frame_id)==false)
-    {
-      ROS_FATAL("No parameter 'odometry_child_frame_id' specified");
-      ros::shutdown();
-      exit(1);
-    }
-    if(ros::param::get(node_name+"/joint_state_frame_id",joint_state_frame_id)==false)
-    {
-      ROS_FATAL("No parameter 'joint_state_frame_id' specified");
-      ros::shutdown();
-      exit(1);
-    }
+  if (ros::param::get(node_name + "/loop_rate", loop_rate) == false) {
+    ROS_FATAL("No parameter 'loop_rate' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/wheel_diameter", wheel_diameter) == false) {
+    ROS_FATAL("No parameter 'wheel_diameter' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/wheel_base", wheel_base) == false) {
+    ROS_FATAL("No parameter 'wheel_base' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/steering_track", steering_track) == false) {
+    ROS_FATAL("No parameter 'steering_track' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/wheel_steering_y_offset",
+                      wheel_steering_y_offset) == false) {
+    ROS_FATAL("No parameter 'wheel_steering_y_offset' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/initPosx", initPosx) == false) {
+    ROS_FATAL("No parameter 'initPosx' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/initPosy", initPosy) == false) {
+    ROS_FATAL("No parameter 'initPosy' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/initPosz", initPosz) == false) {
+    ROS_FATAL("No parameter 'initPosz' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/initYaw", initYaw) == false) {
+    ROS_FATAL("No parameter 'initYaw' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/initPitch", initPitch) == false) {
+    ROS_FATAL("No parameter 'initPitch' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/initRoll", initRoll) == false) {
+    ROS_FATAL("No parameter 'initRoll' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/imu_topic_name", imu_topic_name) == false) {
+    ROS_FATAL("No parameter 'imu_topic_name' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/odometry_out_topic_name",
+                      odometry_out_topic_name) == false) {
+    ROS_FATAL("No parameter 'odometry_out_topic_name' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  // if(ros::param::get(node_name+"/kimera_odometry_out_topic_name",kimera_odometry_out_topic_name)==false)
+  // {
+  //   ROS_FATAL("No parameter 'kimera_odometry_out_topic_name' specified");
+  //   ros::shutdown();
+  //   exit(1);
+  // }
+  if (ros::param::get(node_name + "/joint_state_topic_name",
+                      joint_state_topic_name) == false) {
+    ROS_FATAL("No parameter 'joint_state_topic_name' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/odometry_frame_id", odometry_frame_id) ==
+      false) {
+    ROS_FATAL("No parameter 'odometry_frame_id' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/odometry_child_frame_id",
+                      odometry_child_frame_id) == false) {
+    ROS_FATAL("No parameter 'odometry_child_frame_id' specified");
+    ros::shutdown();
+    exit(1);
+  }
+  if (ros::param::get(node_name + "/joint_state_frame_id",
+                      joint_state_frame_id) == false) {
+    ROS_FATAL("No parameter 'joint_state_frame_id' specified");
+    ros::shutdown();
+    exit(1);
+  }
 
   // Initialize publishers and subscribers
   ros::Subscriber imu_sub = nh.subscribe(imu_topic_name, 1, imuCallback);
-  ros::Subscriber joint_state_sub = nh.subscribe(joint_state_topic_name, 1, jointstateCallback);
-  // ros::Subscriber true_pose_sub = nh.subscribe("/posUpdate", 1, posUpdateCallback);
+  ros::Subscriber joint_state_sub =
+      nh.subscribe(joint_state_topic_name, 1, jointstateCallback);
+  // ros::Subscriber true_pose_sub = nh.subscribe("/posUpdate", 1,
+  // posUpdateCallback);
 
-  ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
-  // ros::Publisher kimera_odom_pub = nh.advertise<nav_msgs::Odometry>(kimera_odometry_out_topic_name, 1);
-  // ros::Publisher odomStatus=nh.advertise<std_msgs::Int64>("localization/status",100);
+  ros::Publisher odom_pub =
+      nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
+  // ros::Publisher kimera_odom_pub =
+  // nh.advertise<nav_msgs::Odometry>(kimera_odometry_out_topic_name, 1);
+  // ros::Publisher
+  // odomStatus=nh.advertise<std_msgs::Int64>("localization/status",100);
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformListener tf_listener_;
 
@@ -226,108 +217,136 @@ int main(int argc, char** argv)
   double delta_time = 0.0;
   double first_loop = true;
   uint32_t seq = 0;
-  while(ros::ok())
-  {
+  while (ros::ok()) {
     double delta_x = 0.0;
     double delta_y = 0.0;
-    double delta_z= 0.0;
+    double delta_z = 0.0;
     double velocity_x = 0.0;
     double velocity_y = 0.0;
-    double velocity_z= 0.0;
-    double linear_vel=0.0;
-    double front_steering_angle= 0.0;
-    double rear_steering_angle=0.0;
-    double front_tmp=0.0;
-    double rear_tmp=0.0;
-    double front_linear_speed=0.0;
-    double rear_linear_speed=0.0;
-    double angular=0.0;
-    double front_left_tmp=0.0;
-    double front_right_tmp=0.0;
-    double fl_speed_tmp=0.0;
-    double fr_speed_tmp=0.0;
-    double rear_left_tmp=0.0;
-    double rear_right_tmp=0.0;
-    double bl_speed_tmp=0.0;
-    double br_speed_tmp=0.0;
+    double velocity_z = 0.0;
+    double linear_vel = 0.0;
+    double front_steering_angle = 0.0;
+    double rear_steering_angle = 0.0;
+    double front_tmp = 0.0;
+    double rear_tmp = 0.0;
+    double front_linear_speed = 0.0;
+    double rear_linear_speed = 0.0;
+    double angular = 0.0;
+    double front_left_tmp = 0.0;
+    double front_right_tmp = 0.0;
+    double fl_speed_tmp = 0.0;
+    double fr_speed_tmp = 0.0;
+    double rear_left_tmp = 0.0;
+    double rear_right_tmp = 0.0;
+    double bl_speed_tmp = 0.0;
+    double br_speed_tmp = 0.0;
 
     current_time = ros::Time::now();
     double delta_time = (current_time - last_time).toSec();
-    if(first_loop)
-    {
+    if (first_loop) {
       delta_x = 0.0;
       delta_y = 0.0;
       delta_z = 0.0;
-      delta_yaw=0.0;
-      delta_pitch=0.0;
-      delta_roll=0.0;
-      yaw=initYaw; // initialize yaw
-      pitch=initPitch;
-      roll=initRoll;
+      delta_yaw = 0.0;
+      delta_pitch = 0.0;
+      delta_roll = 0.0;
+      yaw = initYaw; // initialize yaw
+      pitch = initPitch;
+      roll = initRoll;
       velocity_x = 0.0;
       velocity_y = 0.0;
-      velocity_z=0.0;
-      linear_vel=0.0;
-      angular=0.0;
-      front_steering_angle= 0.0;
-      rear_steering_angle=0.0;
+      velocity_z = 0.0;
+      linear_vel = 0.0;
+      angular = 0.0;
+      front_steering_angle = 0.0;
+      rear_steering_angle = 0.0;
       first_loop = false;
       odom_msg.pose.pose.position.x = initPosx;
       odom_msg.pose.pose.position.y = initPosy;
       odom_msg.pose.pose.position.z = initPosz;
-      odom_msg.pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(initRoll,initPitch,initYaw);
-    }
-    else
-    {
-        //
-        front_steering_angle = 2/((1/tan(fl_wheel_steer))+(1/tan(fr_wheel_steer)));
-        rear_steering_angle = 2/((1/tan(bl_wheel_steer))+(1/tan(br_wheel_steer)));
+      odom_msg.pose.pose.orientation =
+          tf::createQuaternionMsgFromRollPitchYaw(initRoll, initPitch, initYaw);
+    } else {
+      //
+      front_steering_angle =
+          2 / ((1 / tan(fl_wheel_steer)) + (1 / tan(fr_wheel_steer)));
+      rear_steering_angle =
+          2 / ((1 / tan(bl_wheel_steer)) + (1 / tan(br_wheel_steer)));
 
+      front_tmp = cos(front_steering_angle) *
+                  (tan(front_steering_angle) - tan(rear_steering_angle)) /
+                  wheel_base;
+      front_left_tmp =
+          front_tmp /
+          sqrt(1 - steering_track * front_tmp * cos(front_steering_angle) +
+               pow(steering_track * front_tmp / 2, 2));
+      front_right_tmp =
+          front_tmp /
+          sqrt(1 + steering_track * front_tmp * cos(front_steering_angle) +
+               pow(steering_track * front_tmp / 2, 2));
+      fl_speed_tmp =
+          fl_wheel_vel * (1 / (1 - wheel_steering_y_offset * front_left_tmp));
+      fr_speed_tmp =
+          fr_wheel_vel * (1 / (1 - wheel_steering_y_offset * front_right_tmp));
+      front_linear_speed = (wheel_diameter / 2.0) *
+                           copysign(1.0, fl_speed_tmp + fr_speed_tmp) *
+                           sqrt((pow(fl_wheel_vel, 2) + pow(fr_wheel_vel, 2)) /
+                                (2 + pow(steering_track * front_tmp, 2) / 2.0));
 
-        front_tmp = cos(front_steering_angle)*(tan(front_steering_angle)-tan(rear_steering_angle))/wheel_base;
-        front_left_tmp = front_tmp/sqrt(1-steering_track*front_tmp*cos(front_steering_angle)+pow(steering_track*front_tmp/2,2));
-        front_right_tmp = front_tmp/sqrt(1+steering_track*front_tmp*cos(front_steering_angle)+pow(steering_track*front_tmp/2,2));
-        fl_speed_tmp = fl_wheel_vel * (1/(1-wheel_steering_y_offset*front_left_tmp));
-        fr_speed_tmp = fr_wheel_vel * (1/(1-wheel_steering_y_offset*front_right_tmp));
-        front_linear_speed = (wheel_diameter/2.0) * copysign(1.0, fl_speed_tmp+fr_speed_tmp)*sqrt((pow(fl_wheel_vel,2)+pow(fr_wheel_vel,2))/(2+pow(steering_track*front_tmp,2)/2.0));
-
-        rear_tmp = cos(rear_steering_angle)*(tan(front_steering_angle)-tan(rear_steering_angle))/wheel_base;
-        rear_left_tmp = rear_tmp/sqrt(1-steering_track*rear_tmp*cos(rear_steering_angle)+pow(steering_track*rear_tmp/2,2));
-        rear_right_tmp = rear_tmp/sqrt(1+steering_track*rear_tmp*cos(rear_steering_angle)+pow(steering_track*rear_tmp/2,2));
-        bl_speed_tmp = bl_wheel_vel * (1/(1-wheel_steering_y_offset*rear_left_tmp));
-        br_speed_tmp = br_wheel_vel * (1/(1-wheel_steering_y_offset*rear_right_tmp));
-        rear_linear_speed = (wheel_diameter/2.0)  * copysign(1.0, bl_speed_tmp+br_speed_tmp)*sqrt((pow(bl_speed_tmp,2)+pow(br_speed_tmp,2))/(2+pow(steering_track*rear_tmp,2)/2.0));
-
+      rear_tmp = cos(rear_steering_angle) *
+                 (tan(front_steering_angle) - tan(rear_steering_angle)) /
+                 wheel_base;
+      rear_left_tmp =
+          rear_tmp /
+          sqrt(1 - steering_track * rear_tmp * cos(rear_steering_angle) +
+               pow(steering_track * rear_tmp / 2, 2));
+      rear_right_tmp =
+          rear_tmp /
+          sqrt(1 + steering_track * rear_tmp * cos(rear_steering_angle) +
+               pow(steering_track * rear_tmp / 2, 2));
+      bl_speed_tmp =
+          bl_wheel_vel * (1 / (1 - wheel_steering_y_offset * rear_left_tmp));
+      br_speed_tmp =
+          br_wheel_vel * (1 / (1 - wheel_steering_y_offset * rear_right_tmp));
+      rear_linear_speed = (wheel_diameter / 2.0) *
+                          copysign(1.0, bl_speed_tmp + br_speed_tmp) *
+                          sqrt((pow(bl_speed_tmp, 2) + pow(br_speed_tmp, 2)) /
+                               (2 + pow(steering_track * rear_tmp, 2) / 2.0));
 
       // Compute yaw and delta distances
-      angular= (front_linear_speed*front_tmp + rear_linear_speed*rear_tmp)/2.0; //wheel speed
+      angular =
+          (front_linear_speed * front_tmp + rear_linear_speed * rear_tmp) /
+          2.0; // wheel speed
 
-      yaw += delta_yaw; //imu
-      pitch=delta_pitch;
-      roll=delta_roll;
+      yaw += delta_yaw; // imu
+      pitch = delta_pitch;
+      roll = delta_roll;
 
-      velocity_x = (front_linear_speed*cos(front_steering_angle) + rear_linear_speed*cos(rear_steering_angle))/2.0;//robot_body_vel*cos(yaw);
-      velocity_y = (front_linear_speed*sin(front_steering_angle) + rear_linear_speed*sin(rear_steering_angle))/2.0;
-      linear_vel =  copysign(1.0, rear_linear_speed)*sqrt(pow(velocity_x,2)+pow(velocity_y,2));
+      velocity_x = (front_linear_speed * cos(front_steering_angle) +
+                    rear_linear_speed * cos(rear_steering_angle)) /
+                   2.0; // robot_body_vel*cos(yaw);
+      velocity_y = (front_linear_speed * sin(front_steering_angle) +
+                    rear_linear_speed * sin(rear_steering_angle)) /
+                   2.0;
+      linear_vel = copysign(1.0, rear_linear_speed) *
+                   sqrt(pow(velocity_x, 2) + pow(velocity_y, 2));
 
       // delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
       // delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
 
-            delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
-            delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
-            heading +=angular*delta_time;
+      delta_x = ((velocity_x * cos(yaw) - velocity_y * sin(yaw))) * delta_time;
+      delta_y = ((velocity_x * sin(yaw) + velocity_y * cos(yaw))) * delta_time;
+      heading += angular * delta_time;
 
       delta_yaw = 0.0;
-
-
     }
 
-    //tf broadcaster for odometry
+    // tf broadcaster for odometry
 
-    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromRollPitchYaw(roll,pitch,yaw);
+    geometry_msgs::Quaternion odom_quat =
+        tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
 
-
-    //odom publisher
+    // odom publisher
     odom_msg.header.seq = seq;
     odom_msg.header.stamp = current_time;
     odom_msg.header.frame_id = odometry_frame_id;
@@ -339,13 +358,11 @@ int main(int argc, char** argv)
     odom_msg.twist.twist.linear.x = velocity_x;
     odom_msg.twist.twist.linear.y = velocity_y;
     odom_msg.twist.twist.linear.z = velocity_z;
-    odom_msg.twist.twist.angular.x= roll_rate;
-    odom_msg.twist.twist.angular.y= pitch_rate;
+    odom_msg.twist.twist.angular.x = roll_rate;
+    odom_msg.twist.twist.angular.y = pitch_rate;
     odom_msg.twist.twist.angular.z = yaw_rate;
 
     odom_pub.publish(odom_msg);
-
-
 
     ros::spinOnce();
     last_time = current_time;
@@ -355,120 +372,101 @@ int main(int argc, char** argv)
   return 0;
 }
 
-
-void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
-{
-    int fr_wheel_joint_idx;
-    int br_wheel_joint_idx;
-    int fl_wheel_joint_idx;
-    int bl_wheel_joint_idx;
-    int fr_steering_arm_joint_idx;
-    int br_steering_arm_joint_idx;
-    int fl_steering_arm_joint_idx;
-    int bl_steering_arm_joint_idx;
-    //loop joint states
-    for(int i=0; i<msg->name.size(); i++)
-    {
-        if(msg->name[i] == "fr_wheel_joint")
-        {
-            fr_wheel_joint_idx = i;
-        }
-        if(msg->name[i] == "br_wheel_joint")
-        {
-            br_wheel_joint_idx = i;
-        }
-        if(msg->name[i] == "fl_wheel_joint")
-        {
-            fl_wheel_joint_idx = i;
-        }
-        if(msg->name[i] == "bl_wheel_joint")
-        {
-            bl_wheel_joint_idx = i;
-        }
-        if(msg->name[i] == "fr_steering_arm_joint")
-        {
-            fr_steering_arm_joint_idx = i;
-        }
-        if(msg->name[i] == "br_steering_arm_joint")
-        {
-            br_steering_arm_joint_idx = i;
-        }
-        if(msg->name[i] == "fl_steering_arm_joint")
-        {
-            fl_steering_arm_joint_idx = i;
-        }
-        if(msg->name[i] == "bl_steering_arm_joint")
-        {
-            bl_steering_arm_joint_idx = i;
-        }
+void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
+  int fr_wheel_joint_idx;
+  int br_wheel_joint_idx;
+  int fl_wheel_joint_idx;
+  int bl_wheel_joint_idx;
+  int fr_steering_arm_joint_idx;
+  int br_steering_arm_joint_idx;
+  int fl_steering_arm_joint_idx;
+  int bl_steering_arm_joint_idx;
+  // loop joint states
+  for (int i = 0; i < msg->name.size(); i++) {
+    if (msg->name[i] == "fr_wheel_joint") {
+      fr_wheel_joint_idx = i;
     }
+    if (msg->name[i] == "br_wheel_joint") {
+      br_wheel_joint_idx = i;
+    }
+    if (msg->name[i] == "fl_wheel_joint") {
+      fl_wheel_joint_idx = i;
+    }
+    if (msg->name[i] == "bl_wheel_joint") {
+      bl_wheel_joint_idx = i;
+    }
+    if (msg->name[i] == "fr_steering_arm_joint") {
+      fr_steering_arm_joint_idx = i;
+    }
+    if (msg->name[i] == "br_steering_arm_joint") {
+      br_steering_arm_joint_idx = i;
+    }
+    if (msg->name[i] == "fl_steering_arm_joint") {
+      fl_steering_arm_joint_idx = i;
+    }
+    if (msg->name[i] == "bl_steering_arm_joint") {
+      bl_steering_arm_joint_idx = i;
+    }
+  }
 
-    fr_wheel_turn_counts_prev = fr_wheel_turn_counts;
-    fr_wheel_turn_counts = msg->position[fr_wheel_joint_idx];
-    fr_wheel_vel= msg->velocity[fr_wheel_joint_idx];
-    fr_wheel_steer= msg->position[fr_steering_arm_joint_idx];
+  fr_wheel_turn_counts_prev = fr_wheel_turn_counts;
+  fr_wheel_turn_counts = msg->position[fr_wheel_joint_idx];
+  fr_wheel_vel = msg->velocity[fr_wheel_joint_idx];
+  fr_wheel_steer = msg->position[fr_steering_arm_joint_idx];
 
-    br_wheel_turn_counts_prev = br_wheel_turn_counts;
-    br_wheel_turn_counts = msg->position[br_wheel_joint_idx];
-    br_wheel_vel= msg->velocity[br_wheel_joint_idx];
-    br_wheel_steer= msg->position[br_steering_arm_joint_idx];
+  br_wheel_turn_counts_prev = br_wheel_turn_counts;
+  br_wheel_turn_counts = msg->position[br_wheel_joint_idx];
+  br_wheel_vel = msg->velocity[br_wheel_joint_idx];
+  br_wheel_steer = msg->position[br_steering_arm_joint_idx];
 
-    fl_wheel_turn_counts_prev = fl_wheel_turn_counts;
-    fl_wheel_turn_counts = msg->position[fl_wheel_joint_idx];
-    fl_wheel_vel = msg->velocity[fl_wheel_joint_idx];
-    fl_wheel_steer= msg->position[fl_steering_arm_joint_idx];
+  fl_wheel_turn_counts_prev = fl_wheel_turn_counts;
+  fl_wheel_turn_counts = msg->position[fl_wheel_joint_idx];
+  fl_wheel_vel = msg->velocity[fl_wheel_joint_idx];
+  fl_wheel_steer = msg->position[fl_steering_arm_joint_idx];
 
-    bl_wheel_turn_counts_prev = bl_wheel_turn_counts;
-    bl_wheel_turn_counts = msg->position[bl_wheel_joint_idx];
-    bl_wheel_vel= msg->velocity[bl_wheel_joint_idx];
-    bl_wheel_steer= msg->position[bl_steering_arm_joint_idx];
+  bl_wheel_turn_counts_prev = bl_wheel_turn_counts;
+  bl_wheel_turn_counts = msg->position[bl_wheel_joint_idx];
+  bl_wheel_vel = msg->velocity[bl_wheel_joint_idx];
+  bl_wheel_steer = msg->position[bl_steering_arm_joint_idx];
 }
 
-void imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
-{
+void imuCallback(const sensor_msgs::Imu::ConstPtr &msg) {
   imu_time_prev = imu_time;
   imu_time = ros::Time::now().toSec();
-
 
   yaw_rate_prev = yaw_rate;
   yaw_rate = msg->angular_velocity.z;
 
-
-  double accX=msg->linear_acceleration.x;
-  double accY=msg->linear_acceleration.y;
-  double accZ=msg->linear_acceleration.z;
+  double accX = msg->linear_acceleration.x;
+  double accY = msg->linear_acceleration.y;
+  double accZ = msg->linear_acceleration.z;
 
   double rollAcc = atan2(accY, accZ);
-  double pitchAcc= atan2(-accX, sqrt(accY*accY + accZ*accZ));
+  double pitchAcc = atan2(-accX, sqrt(accY * accY + accZ * accZ));
 
-
-
-  double rollOrient, pitchOrient,yawOrient;
+  double rollOrient, pitchOrient, yawOrient;
   //
-  tf::Quaternion q(msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
+  tf::Quaternion q(msg->orientation.x, msg->orientation.y, msg->orientation.z,
+                   msg->orientation.w);
   //
   tf::Matrix3x3 m(q);
   m.getRPY(rollOrient, pitchOrient, yawOrient);
 
-  if(first_callback)
-  {
+  if (first_callback) {
 
     delta_yaw = 0.0;
-    roll_rate =0.0;
-    pitch_rate=0.0;
+    roll_rate = 0.0;
+    pitch_rate = 0.0;
 
     first_callback = false;
-  }
-  else
-  {
-    delta_yaw = ((yaw_rate + yaw_rate_prev)/2.0)*(imu_time - imu_time_prev);
-    delta_pitch= pitchAcc;
-    delta_roll=rollAcc;
+  } else {
+    delta_yaw = ((yaw_rate + yaw_rate_prev) / 2.0) * (imu_time - imu_time_prev);
+    delta_pitch = pitchAcc;
+    delta_roll = rollAcc;
     // roll_rate_prev = roll_rate;
-    roll_rate = rollAcc/(imu_time - imu_time_prev);
+    roll_rate = rollAcc / (imu_time - imu_time_prev);
 
     // pitch_rate_prev =pitch_rate;
-    pitch_rate= pitchAcc/(imu_time - imu_time_prev);
-
+    pitch_rate = pitchAcc / (imu_time - imu_time_prev);
   }
 }
