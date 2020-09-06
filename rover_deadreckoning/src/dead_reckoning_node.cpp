@@ -166,26 +166,26 @@ int main(int argc, char **argv) {
   //   ros::shutdown();
   //   exit(1);
   // }
-  if (ros::param::get(node_name + "/joint_state_topic_name",
-                      joint_state_topic_name) == false) {
+  if (ros::param::get(node_name + "/joint_state_topic_name", joint_state_topic_name) == false)
+  {
     ROS_FATAL("No parameter 'joint_state_topic_name' specified");
     ros::shutdown();
     exit(1);
   }
-  if (ros::param::get(node_name + "/odometry_frame_id", odometry_frame_id) ==
-      false) {
+  if (ros::param::get(node_name + "/odometry_frame_id", odometry_frame_id) == false)
+  {
     ROS_FATAL("No parameter 'odometry_frame_id' specified");
     ros::shutdown();
     exit(1);
   }
-  if (ros::param::get(node_name + "/odometry_child_frame_id",
-                      odometry_child_frame_id) == false) {
+  if (ros::param::get(node_name + "/odometry_child_frame_id", odometry_child_frame_id) == false)
+  {
     ROS_FATAL("No parameter 'odometry_child_frame_id' specified");
     ros::shutdown();
     exit(1);
   }
-  if (ros::param::get(node_name + "/joint_state_frame_id",
-                      joint_state_frame_id) == false) {
+  if (ros::param::get(node_name + "/joint_state_frame_id", joint_state_frame_id) == false)
+  {
     ROS_FATAL("No parameter 'joint_state_frame_id' specified");
     ros::shutdown();
     exit(1);
@@ -193,13 +193,11 @@ int main(int argc, char **argv) {
 
   // Initialize publishers and subscribers
   ros::Subscriber imu_sub = nh.subscribe(imu_topic_name, 1, imuCallback);
-  ros::Subscriber joint_state_sub =
-      nh.subscribe(joint_state_topic_name, 1, jointstateCallback);
+  ros::Subscriber joint_state_sub = nh.subscribe(joint_state_topic_name, 1, jointstateCallback);
   // ros::Subscriber true_pose_sub = nh.subscribe("/posUpdate", 1,
   // posUpdateCallback);
 
-  ros::Publisher odom_pub =
-      nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
+  ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
   // ros::Publisher kimera_odom_pub =
   // nh.advertise<nav_msgs::Odometry>(kimera_odometry_out_topic_name, 1);
   // ros::Publisher
@@ -217,7 +215,8 @@ int main(int argc, char **argv) {
   double delta_time = 0.0;
   double first_loop = true;
   uint32_t seq = 0;
-  while (ros::ok()) {
+  while (ros::ok())
+  {
     double delta_x = 0.0;
     double delta_y = 0.0;
     double delta_z = 0.0;
@@ -243,7 +242,8 @@ int main(int argc, char **argv) {
 
     current_time = ros::Time::now();
     double delta_time = (current_time - last_time).toSec();
-    if (first_loop) {
+    if (first_loop)
+    {
       delta_x = 0.0;
       delta_y = 0.0;
       delta_z = 0.0;
@@ -266,70 +266,37 @@ int main(int argc, char **argv) {
       odom_msg.pose.pose.position.z = initPosz;
       odom_msg.pose.pose.orientation =
           tf::createQuaternionMsgFromRollPitchYaw(initRoll, initPitch, initYaw);
-    } else {
+    }
+    else
+    {
       //
-      front_steering_angle =
-          2 / ((1 / tan(fl_wheel_steer)) + (1 / tan(fr_wheel_steer)));
-      rear_steering_angle =
-          2 / ((1 / tan(bl_wheel_steer)) + (1 / tan(br_wheel_steer)));
+      front_steering_angle = 2 / ((1 / tan(fl_wheel_steer)) + (1 / tan(fr_wheel_steer)));
+      rear_steering_angle = 2 / ((1 / tan(bl_wheel_steer)) + (1 / tan(br_wheel_steer)));
 
-      front_tmp = cos(front_steering_angle) *
-                  (tan(front_steering_angle) - tan(rear_steering_angle)) /
-                  wheel_base;
-      front_left_tmp =
-          front_tmp /
-          sqrt(1 - steering_track * front_tmp * cos(front_steering_angle) +
-               pow(steering_track * front_tmp / 2, 2));
-      front_right_tmp =
-          front_tmp /
-          sqrt(1 + steering_track * front_tmp * cos(front_steering_angle) +
-               pow(steering_track * front_tmp / 2, 2));
-      fl_speed_tmp =
-          fl_wheel_vel * (1 / (1 - wheel_steering_y_offset * front_left_tmp));
-      fr_speed_tmp =
-          fr_wheel_vel * (1 / (1 - wheel_steering_y_offset * front_right_tmp));
-      front_linear_speed = (wheel_diameter / 2.0) *
-                           copysign(1.0, fl_speed_tmp + fr_speed_tmp) *
-                           sqrt((pow(fl_wheel_vel, 2) + pow(fr_wheel_vel, 2)) /
-                                (2 + pow(steering_track * front_tmp, 2) / 2.0));
+      front_tmp = cos(front_steering_angle) * (tan(front_steering_angle) - tan(rear_steering_angle)) / wheel_base;
+      front_left_tmp = front_tmp / sqrt(1 - steering_track * front_tmp * cos(front_steering_angle) + pow(steering_track * front_tmp / 2, 2));
+      front_right_tmp = front_tmp / sqrt(1 + steering_track * front_tmp * cos(front_steering_angle) + pow(steering_track * front_tmp / 2, 2));
+      fl_speed_tmp = fl_wheel_vel * (1 / (1 - wheel_steering_y_offset * front_left_tmp));
+      fr_speed_tmp = fr_wheel_vel * (1 / (1 - wheel_steering_y_offset * front_right_tmp));
+      front_linear_speed = (wheel_diameter / 2.0) * copysign(1.0, fl_speed_tmp + fr_speed_tmp) * sqrt((pow(fl_wheel_vel, 2) + pow(fr_wheel_vel, 2)) / (2 + pow(steering_track * front_tmp, 2) / 2.0));
 
-      rear_tmp = cos(rear_steering_angle) *
-                 (tan(front_steering_angle) - tan(rear_steering_angle)) /
-                 wheel_base;
-      rear_left_tmp =
-          rear_tmp /
-          sqrt(1 - steering_track * rear_tmp * cos(rear_steering_angle) +
-               pow(steering_track * rear_tmp / 2, 2));
-      rear_right_tmp =
-          rear_tmp /
-          sqrt(1 + steering_track * rear_tmp * cos(rear_steering_angle) +
-               pow(steering_track * rear_tmp / 2, 2));
-      bl_speed_tmp =
-          bl_wheel_vel * (1 / (1 - wheel_steering_y_offset * rear_left_tmp));
-      br_speed_tmp =
-          br_wheel_vel * (1 / (1 - wheel_steering_y_offset * rear_right_tmp));
-      rear_linear_speed = (wheel_diameter / 2.0) *
-                          copysign(1.0, bl_speed_tmp + br_speed_tmp) *
-                          sqrt((pow(bl_speed_tmp, 2) + pow(br_speed_tmp, 2)) /
-                               (2 + pow(steering_track * rear_tmp, 2) / 2.0));
+      rear_tmp = cos(rear_steering_angle) * (tan(front_steering_angle) - tan(rear_steering_angle)) / wheel_base;
+      rear_left_tmp = rear_tmp / sqrt(1 - steering_track * rear_tmp * cos(rear_steering_angle) + pow(steering_track * rear_tmp / 2, 2));
+      rear_right_tmp = rear_tmp / sqrt(1 + steering_track * rear_tmp * cos(rear_steering_angle) + pow(steering_track * rear_tmp / 2, 2));
+      bl_speed_tmp = bl_wheel_vel * (1 / (1 - wheel_steering_y_offset * rear_left_tmp));
+      br_speed_tmp = br_wheel_vel * (1 / (1 - wheel_steering_y_offset * rear_right_tmp));
+      rear_linear_speed = (wheel_diameter / 2.0) * copysign(1.0, bl_speed_tmp + br_speed_tmp) * sqrt((pow(bl_speed_tmp, 2) + pow(br_speed_tmp, 2)) / (2 + pow(steering_track * rear_tmp, 2) / 2.0));
 
       // Compute yaw and delta distances
-      angular =
-          (front_linear_speed * front_tmp + rear_linear_speed * rear_tmp) /
-          2.0; // wheel speed
+      angular = (front_linear_speed * front_tmp + rear_linear_speed * rear_tmp) / 2.0; // wheel speed
 
       yaw += delta_yaw; // imu
       pitch = delta_pitch;
       roll = delta_roll;
 
-      velocity_x = (front_linear_speed * cos(front_steering_angle) +
-                    rear_linear_speed * cos(rear_steering_angle)) /
-                   2.0; // robot_body_vel*cos(yaw);
-      velocity_y = (front_linear_speed * sin(front_steering_angle) +
-                    rear_linear_speed * sin(rear_steering_angle)) /
-                   2.0;
-      linear_vel = copysign(1.0, rear_linear_speed) *
-                   sqrt(pow(velocity_x, 2) + pow(velocity_y, 2));
+      velocity_x = (front_linear_speed * cos(front_steering_angle) + rear_linear_speed * cos(rear_steering_angle)) / 2.0; // robot_body_vel*cos(yaw);
+      velocity_y = (front_linear_speed * sin(front_steering_angle) + rear_linear_speed * sin(rear_steering_angle)) / 2.0;
+      linear_vel = copysign(1.0, rear_linear_speed) * sqrt(pow(velocity_x, 2) + pow(velocity_y, 2));
 
       // delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
       // delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
