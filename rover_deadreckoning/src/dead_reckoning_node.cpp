@@ -45,16 +45,12 @@ double roll_rate_prev = 0.0;
 double delta_roll = 0.0;
 
 bool first_callback = true;
-// bool call_true_pose = true;
 double imu_time;
 double imu_time_prev;
 double yaw = 0.0;
 double heading = 0.0;
 double pitch = 0.0;
 double roll = 0.0;
-// double yawTruth = 0.0;
-// double pitchTruth=0.0;
-// double rollTruth=0.0;
 double pitchAcc = 0.0;
 double rollAcc = 0.0;
 double pos_x = 0.0;
@@ -64,33 +60,64 @@ double orient_x = 0.0;
 double orient_y = 0.0;
 double orient_z = 0.0;
 double orient_w = 1.0;
+double delta_x = 0.0;
+double delta_y = 0.0;
+double delta_z = 0.0;
+double velocity_x = 0.0;
+double velocity_y = 0.0;
+double velocity_z = 0.0;
+double linear_vel = 0.0;
+double front_steering_angle = 0.0;
+double rear_steering_angle = 0.0;
+double front_tmp = 0.0;
+double rear_tmp = 0.0;
+double front_linear_speed = 0.0;
+double rear_linear_speed = 0.0;
+double angular = 0.0;
+double front_left_tmp = 0.0;
+double front_right_tmp = 0.0;
+double fl_speed_tmp = 0.0;
+double fr_speed_tmp = 0.0;
+double rear_left_tmp = 0.0;
+double rear_right_tmp = 0.0;
+double bl_speed_tmp = 0.0;
+double br_speed_tmp = 0.0;
+float loop_rate;                // Hz
+double wheel_diameter;          // m
+double wheel_base;              // m
+double steering_track;          // m
+double wheel_steering_y_offset; // m
+double initPosx;                // m
+double initPosy;                // m
+double initPosz;                // m
+double initYaw;                 // rad
+double initPitch;               // rad
+double initRoll;                // rad
+double delta_time = 0.0;
+double first_loop = true;
+uint32_t seq = 0;
+std::string imu_topic_name;
+std::string odometry_out_topic_name;
+// std::string kimera_odometry_out_topic_name;
+std::string joint_state_topic_name;
+std::string odometry_frame_id;
+std::string odometry_child_frame_id;
+std::string joint_state_frame_id;
+
+ros::Time current_time, last_time;
+ros::Publisher odom_pub;
 // Declare sensor callback functions
 void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
 void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg);
 
 int main(int argc, char **argv) {
-  float loop_rate;                // Hz
-  double wheel_diameter;          // m
-  double wheel_base;              // m
-  double steering_track;          // m
-  double wheel_steering_y_offset; // m
-  double initPosx;                // m
-  double initPosy;                // m
-  double initPosz;                // m
-  double initYaw;                 // rad
-  double initPitch;               // rad
-  double initRoll;                // rad
-  std::string imu_topic_name;
-  std::string odometry_out_topic_name;
-  // std::string kimera_odometry_out_topic_name;
-  std::string joint_state_topic_name;
-  std::string odometry_frame_id;
-  std::string odometry_child_frame_id;
-  std::string joint_state_frame_id;
-  // Initialize ROS
+
   std::string node_name = "rover_dead_reckoning_node";
   ros::init(argc, argv, node_name);
   ros::NodeHandle nh;
+
+
+  ros::Subscriber imu_sub, joint_state_sub;
 
   // Read params from yaml file
   if (ros::param::get(node_name + "/loop_rate", loop_rate) == false) {
@@ -190,156 +217,57 @@ int main(int argc, char **argv) {
     ros::shutdown();
     exit(1);
   }
+  nav_msgs::Odometry odom_msg; // Initializes to all zero, by default
 
   // Initialize publishers and subscribers
-  ros::Subscriber imu_sub = nh.subscribe(imu_topic_name, 1, imuCallback);
-  ros::Subscriber joint_state_sub = nh.subscribe(joint_state_topic_name, 1, jointstateCallback);
+  imu_sub = nh.subscribe(imu_topic_name, 1, imuCallback);
+  joint_state_sub = nh.subscribe(joint_state_topic_name, 1, jointstateCallback);
   // ros::Subscriber true_pose_sub = nh.subscribe("/posUpdate", 1,
   // posUpdateCallback);
 
-  ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
-  // ros::Publisher kimera_odom_pub =
-  // nh.advertise<nav_msgs::Odometry>(kimera_odometry_out_topic_name, 1);
-  // ros::Publisher
-  // odomStatus=nh.advertise<std_msgs::Int64>("localization/status",100);
-  tf::TransformBroadcaster odom_broadcaster;
-  tf::TransformListener tf_listener_;
+  odom_pub = nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
+  // tf::TransformBroadcaster odom_broadcaster;
+  // tf::TransformListener tf_listener_;
 
   // Initialize states
-  nav_msgs::Odometry odom_msg; // Initializes to all zero, by default
+  // nav_msgs::Odometry odom_msg; // Initializes to all zero, by default
   // nav_msgs::Odometry kimera_odom_msg;
-  ros::Rate rate(loop_rate);
-  ros::Time current_time, last_time;
+  // ros::Rate rate(loop_rate);
+
   current_time = ros::Time::now();
   last_time = ros::Time::now();
-  double delta_time = 0.0;
-  double first_loop = true;
-  uint32_t seq = 0;
-  while (ros::ok())
-  {
-    double delta_x = 0.0;
-    double delta_y = 0.0;
-    double delta_z = 0.0;
-    double velocity_x = 0.0;
-    double velocity_y = 0.0;
-    double velocity_z = 0.0;
-    double linear_vel = 0.0;
-    double front_steering_angle = 0.0;
-    double rear_steering_angle = 0.0;
-    double front_tmp = 0.0;
-    double rear_tmp = 0.0;
-    double front_linear_speed = 0.0;
-    double rear_linear_speed = 0.0;
-    double angular = 0.0;
-    double front_left_tmp = 0.0;
-    double front_right_tmp = 0.0;
-    double fl_speed_tmp = 0.0;
-    double fr_speed_tmp = 0.0;
-    double rear_left_tmp = 0.0;
-    double rear_right_tmp = 0.0;
-    double bl_speed_tmp = 0.0;
-    double br_speed_tmp = 0.0;
+  // double delta_time = 0.0;
+  // double first_loop = true;
+  // uint32_t seq = 0;
+  delta_x = 0.0;
+  delta_y = 0.0;
+  delta_z = 0.0;
+  delta_yaw = 0.0;
+  delta_pitch = 0.0;
+  delta_roll = 0.0;
+  yaw = initYaw; // initialize yaw
+  pitch = initPitch;
+  roll = initRoll;
+  velocity_x = 0.0;
+  velocity_y = 0.0;
+  velocity_z = 0.0;
+  linear_vel = 0.0;
+  angular = 0.0;
+  front_steering_angle = 0.0;
+  rear_steering_angle = 0.0;
+  first_loop = false;
+  odom_msg.pose.pose.position.x = initPosx;
+  odom_msg.pose.pose.position.y = initPosy;
+  odom_msg.pose.pose.position.z = initPosz;
+  odom_msg.pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(initRoll, initPitch, initYaw);
 
-    current_time = ros::Time::now();
-    double delta_time = (current_time - last_time).toSec();
-    if (first_loop)
-    {
-      delta_x = 0.0;
-      delta_y = 0.0;
-      delta_z = 0.0;
-      delta_yaw = 0.0;
-      delta_pitch = 0.0;
-      delta_roll = 0.0;
-      yaw = initYaw; // initialize yaw
-      pitch = initPitch;
-      roll = initRoll;
-      velocity_x = 0.0;
-      velocity_y = 0.0;
-      velocity_z = 0.0;
-      linear_vel = 0.0;
-      angular = 0.0;
-      front_steering_angle = 0.0;
-      rear_steering_angle = 0.0;
-      first_loop = false;
-      odom_msg.pose.pose.position.x = initPosx;
-      odom_msg.pose.pose.position.y = initPosy;
-      odom_msg.pose.pose.position.z = initPosz;
-      odom_msg.pose.pose.orientation =
-          tf::createQuaternionMsgFromRollPitchYaw(initRoll, initPitch, initYaw);
-    }
-    else
-    {
-      //
-      front_steering_angle = 2 / ((1 / tan(fl_wheel_steer)) + (1 / tan(fr_wheel_steer)));
-      rear_steering_angle = 2 / ((1 / tan(bl_wheel_steer)) + (1 / tan(br_wheel_steer)));
-
-      front_tmp = cos(front_steering_angle) * (tan(front_steering_angle) - tan(rear_steering_angle)) / wheel_base;
-      front_left_tmp = front_tmp / sqrt(1 - steering_track * front_tmp * cos(front_steering_angle) + pow(steering_track * front_tmp / 2, 2));
-      front_right_tmp = front_tmp / sqrt(1 + steering_track * front_tmp * cos(front_steering_angle) + pow(steering_track * front_tmp / 2, 2));
-      fl_speed_tmp = fl_wheel_vel * (1 / (1 - wheel_steering_y_offset * front_left_tmp));
-      fr_speed_tmp = fr_wheel_vel * (1 / (1 - wheel_steering_y_offset * front_right_tmp));
-      front_linear_speed = (wheel_diameter / 2.0) * copysign(1.0, fl_speed_tmp + fr_speed_tmp) * sqrt((pow(fl_wheel_vel, 2) + pow(fr_wheel_vel, 2)) / (2 + pow(steering_track * front_tmp, 2) / 2.0));
-
-      rear_tmp = cos(rear_steering_angle) * (tan(front_steering_angle) - tan(rear_steering_angle)) / wheel_base;
-      rear_left_tmp = rear_tmp / sqrt(1 - steering_track * rear_tmp * cos(rear_steering_angle) + pow(steering_track * rear_tmp / 2, 2));
-      rear_right_tmp = rear_tmp / sqrt(1 + steering_track * rear_tmp * cos(rear_steering_angle) + pow(steering_track * rear_tmp / 2, 2));
-      bl_speed_tmp = bl_wheel_vel * (1 / (1 - wheel_steering_y_offset * rear_left_tmp));
-      br_speed_tmp = br_wheel_vel * (1 / (1 - wheel_steering_y_offset * rear_right_tmp));
-      rear_linear_speed = (wheel_diameter / 2.0) * copysign(1.0, bl_speed_tmp + br_speed_tmp) * sqrt((pow(bl_speed_tmp, 2) + pow(br_speed_tmp, 2)) / (2 + pow(steering_track * rear_tmp, 2) / 2.0));
-
-      // Compute yaw and delta distances
-      angular = (front_linear_speed * front_tmp + rear_linear_speed * rear_tmp) / 2.0; // wheel speed
-
-      yaw += delta_yaw; // imu
-      pitch = delta_pitch;
-      roll = delta_roll;
-
-      velocity_x = (front_linear_speed * cos(front_steering_angle) + rear_linear_speed * cos(rear_steering_angle)) / 2.0; // robot_body_vel*cos(yaw);
-      velocity_y = (front_linear_speed * sin(front_steering_angle) + rear_linear_speed * sin(rear_steering_angle)) / 2.0;
-      linear_vel = copysign(1.0, rear_linear_speed) * sqrt(pow(velocity_x, 2) + pow(velocity_y, 2));
-
-      // delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
-      // delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
-
-      delta_x = ((velocity_x * cos(yaw) - velocity_y * sin(yaw))) * delta_time;
-      delta_y = ((velocity_x * sin(yaw) + velocity_y * cos(yaw))) * delta_time;
-      heading += angular * delta_time;
-
-      delta_yaw = 0.0;
-    }
-
-    // tf broadcaster for odometry
-
-    geometry_msgs::Quaternion odom_quat =
-        tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
-
-    // odom publisher
-    odom_msg.header.seq = seq;
-    odom_msg.header.stamp = current_time;
-    odom_msg.header.frame_id = odometry_frame_id;
-    odom_msg.pose.pose.position.x += delta_x;
-    odom_msg.pose.pose.position.y += delta_y;
-    odom_msg.pose.pose.position.z += delta_z;
-    odom_msg.pose.pose.orientation = odom_quat;
-    odom_msg.child_frame_id = odometry_child_frame_id;
-    odom_msg.twist.twist.linear.x = velocity_x;
-    odom_msg.twist.twist.linear.y = velocity_y;
-    odom_msg.twist.twist.linear.z = velocity_z;
-    odom_msg.twist.twist.angular.x = roll_rate;
-    odom_msg.twist.twist.angular.y = pitch_rate;
-    odom_msg.twist.twist.angular.z = yaw_rate;
-
-    odom_pub.publish(odom_msg);
-
-    ros::spinOnce();
-    last_time = current_time;
-    rate.sleep();
-  }
-
+  ros::spin();
   return 0;
 }
 
 void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
+  current_time = ros::Time::now();
+  double delta_time = (current_time - last_time).toSec();
   int fr_wheel_joint_idx;
   int br_wheel_joint_idx;
   int fl_wheel_joint_idx;
@@ -395,6 +323,82 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
   bl_wheel_turn_counts = msg->position[bl_wheel_joint_idx];
   bl_wheel_vel = msg->velocity[bl_wheel_joint_idx];
   bl_wheel_steer = msg->position[bl_steering_arm_joint_idx];
+
+  front_steering_angle = atan(2*tan(fl_wheel_steer)*tan(fr_wheel_steer)/(tan(fl_wheel_steer) + tan(fr_wheel_steer)));
+  if (fabs(tan(fl_wheel_steer) + tan(fr_wheel_steer)) < 0.001) {
+    front_steering_angle = 0;
+  }
+
+  rear_steering_angle = atan(2*tan(bl_wheel_steer)*tan(br_wheel_steer)/(tan(bl_wheel_steer) + tan(br_wheel_steer)));
+  if (fabs(tan(bl_wheel_steer) + tan(br_wheel_steer)) < 0.001) {
+    rear_steering_angle = 0;
+  }
+
+  front_tmp = cos(front_steering_angle) * (tan(front_steering_angle) - tan(rear_steering_angle)) / wheel_base;
+  front_left_tmp = front_tmp / sqrt(1 - steering_track * front_tmp * cos(front_steering_angle) + pow(steering_track * front_tmp / 2, 2));
+  front_right_tmp = front_tmp / sqrt(1 + steering_track * front_tmp * cos(front_steering_angle) + pow(steering_track * front_tmp / 2, 2));
+  fl_speed_tmp = fl_wheel_vel * (1 / (1 - wheel_steering_y_offset * front_left_tmp));
+  fr_speed_tmp = fr_wheel_vel * (1 / (1 - wheel_steering_y_offset * front_right_tmp));
+  front_linear_speed = (wheel_diameter / 2.0) * copysign(1.0, fl_speed_tmp + fr_speed_tmp) * sqrt((pow(fl_wheel_vel, 2) + pow(fr_wheel_vel, 2)) / (2 + pow(steering_track * front_tmp, 2) / 2.0));
+
+  rear_tmp = cos(rear_steering_angle) * (tan(front_steering_angle) - tan(rear_steering_angle)) / wheel_base;
+  rear_left_tmp = rear_tmp / sqrt(1 - steering_track * rear_tmp * cos(rear_steering_angle) + pow(steering_track * rear_tmp / 2, 2));
+  rear_right_tmp = rear_tmp / sqrt(1 + steering_track * rear_tmp * cos(rear_steering_angle) + pow(steering_track * rear_tmp / 2, 2));
+  bl_speed_tmp = bl_wheel_vel * (1 / (1 - wheel_steering_y_offset * rear_left_tmp));
+  br_speed_tmp = br_wheel_vel * (1 / (1 - wheel_steering_y_offset * rear_right_tmp));
+  rear_linear_speed = (wheel_diameter / 2.0) * copysign(1.0, bl_speed_tmp + br_speed_tmp) * sqrt((pow(bl_speed_tmp, 2) + pow(br_speed_tmp, 2)) / (2 + pow(steering_track * rear_tmp, 2) / 2.0));
+
+  // Compute yaw and delta distances
+  angular = (front_linear_speed * front_tmp + rear_linear_speed * rear_tmp) / 2.0; // wheel speed
+
+  yaw += delta_yaw; // imu
+  pitch = delta_pitch;
+  roll = delta_roll;
+
+  velocity_x = (front_linear_speed * cos(front_steering_angle) + rear_linear_speed * cos(rear_steering_angle)) / 2.0; // robot_body_vel*cos(yaw);
+  velocity_y = (front_linear_speed * sin(front_steering_angle) + rear_linear_speed * sin(rear_steering_angle)) / 2.0;
+  if ((fabs(fl_wheel_steer) + fabs(fr_wheel_steer)) > PI/3 && fabs(fl_wheel_steer + fr_wheel_steer) < PI/10) {
+    velocity_x = 0;
+    velocity_y = 0;
+  }
+  linear_vel = copysign(1.0, rear_linear_speed) * sqrt(pow(velocity_x, 2) + pow(velocity_y, 2));
+
+  // delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
+  // delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
+
+  delta_x = ((velocity_x * cos(yaw) - velocity_y * sin(yaw))) * delta_time;
+  delta_y = ((velocity_x * sin(yaw) + velocity_y * cos(yaw))) * delta_time;
+  heading += angular * delta_time;
+
+  delta_yaw = 0.0;
+  nav_msgs::Odometry odom_msg;
+  tf::TransformBroadcaster odom_broadcaster;
+  tf::TransformListener tf_listener_;
+
+  geometry_msgs::Quaternion odom_quat =
+      tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
+
+  // odom publisher
+  odom_msg.header.seq = seq;
+  odom_msg.header.stamp = current_time;
+  odom_msg.header.frame_id = odometry_frame_id;
+  odom_msg.pose.pose.position.x += delta_x;
+  odom_msg.pose.pose.position.y += delta_y;
+  odom_msg.pose.pose.position.z += delta_z;
+  odom_msg.pose.pose.orientation = odom_quat;
+  odom_msg.child_frame_id = odometry_child_frame_id;
+  odom_msg.twist.twist.linear.x = velocity_x;
+  odom_msg.twist.twist.linear.y = velocity_y;
+  odom_msg.twist.twist.linear.z = velocity_z;
+  odom_msg.twist.twist.angular.x = roll_rate;
+  odom_msg.twist.twist.angular.y = pitch_rate;
+  odom_msg.twist.twist.angular.z = yaw_rate;
+
+  odom_pub.publish(odom_msg);
+
+  // ros::spinOnce();
+  last_time = current_time;
+
 }
 
 void imuCallback(const sensor_msgs::Imu::ConstPtr &msg) {
