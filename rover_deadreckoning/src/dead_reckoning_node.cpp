@@ -117,11 +117,6 @@ int main(int argc, char **argv) {
   ros::Subscriber imu_sub, joint_state_sub;
 
   // Read params from yaml file
-  if (ros::param::get(node_name + "/loop_rate", loop_rate) == false) {
-    ROS_FATAL("No parameter 'loop_rate' specified");
-    ros::shutdown();
-    exit(1);
-  }
   if (ros::param::get(node_name + "/wheel_diameter", wheel_diameter) == false) {
     ROS_FATAL("No parameter 'wheel_diameter' specified");
     ros::shutdown();
@@ -368,8 +363,8 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformListener tf_listener_;
 
-  geometry_msgs::Quaternion odom_quat =
-      tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
+  // geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
+  geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(yaw);
 
   // odom publisher
   odom_msg.header.seq = seq;
@@ -377,19 +372,28 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
   odom_msg.header.frame_id = odometry_frame_id;
   odom_msg.pose.pose.position.x += delta_x;
   odom_msg.pose.pose.position.y += delta_y;
-  odom_msg.pose.pose.position.z += delta_z;
+  odom_msg.pose.pose.position.z += 0.0;
   odom_msg.pose.pose.orientation = odom_quat;
   odom_msg.child_frame_id = odometry_child_frame_id;
   odom_msg.twist.twist.linear.x = velocity_x;
   odom_msg.twist.twist.linear.y = velocity_y;
-  odom_msg.twist.twist.linear.z = velocity_z;
-  odom_msg.twist.twist.angular.x = roll_rate;
-  odom_msg.twist.twist.angular.y = pitch_rate;
+  odom_msg.twist.twist.linear.z = 0.0;
+  odom_msg.twist.twist.angular.x = 0.0;
+  odom_msg.twist.twist.angular.y = 0.0;
   odom_msg.twist.twist.angular.z = yaw_rate;
 
-  odom_pub.publish(odom_msg);
+  if (std::isnan(delta_x) || std::isnan(delta_y) || std::isnan(yaw) || std::isnan(velocity_x) || std::isnan(velocity_y) || std::isnan(yaw_rate))
+  {
+    ROS_FATAL("NaN parameters. Restarting WO");
+    ros::shutdown();
+  }
+  else
+  {
+    odom_pub.publish(odom_msg);
+  }
 
-  // ros::spinOnce();
+
+
   last_time = current_time;
 
 }
@@ -397,40 +401,43 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
 void imuCallback(const sensor_msgs::Imu::ConstPtr &msg) {
   imu_time_prev = imu_time;
   imu_time = ros::Time::now().toSec();
-
+  double delta_imu_time = imu_time - imu_time_prev;
+  if (delta_imu_time<0.0001)
+  {
+  return;
+  }
   yaw_rate_prev = yaw_rate;
   yaw_rate = msg->angular_velocity.z;
 
-  double accX = msg->linear_acceleration.x;
-  double accY = msg->linear_acceleration.y;
-  double accZ = msg->linear_acceleration.z;
+  // double accX = msg->linear_acceleration.x;
+  // double accY = msg->linear_acceleration.y;
+  // double accZ = msg->linear_acceleration.z;
 
-  double rollAcc = atan2(accY, accZ);
-  double pitchAcc = atan2(-accX, sqrt(accY * accY + accZ * accZ));
+  // double rollAcc = atan2(accY, accZ);
+  // double pitchAcc = atan2(-accX, sqrt(accY * accY + accZ * accZ));
 
-  double rollOrient, pitchOrient, yawOrient;
+  // double rollOrient, pitchOrient, yawOrient;
   //
-  tf::Quaternion q(msg->orientation.x, msg->orientation.y, msg->orientation.z,
-                   msg->orientation.w);
+  // tf::Quaternion q(msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
   //
-  tf::Matrix3x3 m(q);
-  m.getRPY(rollOrient, pitchOrient, yawOrient);
+  // tf::Matrix3x3 m(q);
+  // m.getRPY(rollOrient, pitchOrient, yawOrient);
 
   if (first_callback) {
 
     delta_yaw = 0.0;
-    roll_rate = 0.0;
-    pitch_rate = 0.0;
+    // roll_rate = 0.0;
+    // pitch_rate = 0.0;
 
     first_callback = false;
   } else {
-    delta_yaw = ((yaw_rate + yaw_rate_prev) / 2.0) * (imu_time - imu_time_prev);
-    delta_pitch = pitchAcc;
-    delta_roll = rollAcc;
-    // roll_rate_prev = roll_rate;
-    roll_rate = rollAcc / (imu_time - imu_time_prev);
-
-    // pitch_rate_prev =pitch_rate;
-    pitch_rate = pitchAcc / (imu_time - imu_time_prev);
+    delta_yaw = ((yaw_rate + yaw_rate_prev) / 2.0) * (delta_imu_time);
+    // delta_pitch = pitchAcc;
+    // delta_roll = rollAcc;
+    // // roll_rate_prev = roll_rate;
+    // roll_rate = rollAcc / (delta_imu_time);
+    //
+    // // pitch_rate_prev =pitch_rate;
+    // pitch_rate = pitchAcc / (delta_imu_time);
   }
 }

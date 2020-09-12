@@ -2,7 +2,7 @@
 <launch>
   <group ns="scout_1">
    <param name="/use_sim_time" value="true"/>
-   <node name="rover_dead_reckoning_node" pkg="rover_deadreckoning" type="rover_dead_reckoning_node" output="screen">
+   <node name="rover_dead_reckoning_node" pkg="rover_deadreckoning" type="rover_dead_reckoning_node" respawn ="true" output="screen">
      <rosparam
       command="load"
       file="$(find rover_deadreckoning)/config/scout_dead_reckoning.yaml"
