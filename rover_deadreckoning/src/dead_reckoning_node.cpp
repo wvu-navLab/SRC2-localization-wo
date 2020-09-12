@@ -32,19 +32,15 @@ double br_wheel_turn_counts = 0.0;
 double br_wheel_turn_counts_prev = 0.0;
 double br_delta_counts = 0.0;
 double br_wheel_vel = 0.0;
-
 double yaw_rate = 0.0;
 double yaw_rate_prev = 0.0;
 double pitch_rate = 0.0;
 double pitch_rate_prev = 0.0;
 double delta_yaw = 0.0;
-// double delta_yaw2 = 0.0;
 double delta_pitch = 0.0;
 double roll_rate = 0.0;
 double roll_rate_prev = 0.0;
 double delta_roll = 0.0;
-
-bool first_callback = true;
 double imu_time;
 double imu_time_prev;
 double yaw = 0.0;
@@ -94,11 +90,11 @@ double initYaw;                 // rad
 double initPitch;               // rad
 double initRoll;                // rad
 double delta_time = 0.0;
-double first_loop = true;
+// double first_loop = true;
+bool first_callback = true;
 uint32_t seq = 0;
 std::string imu_topic_name;
 std::string odometry_out_topic_name;
-// std::string kimera_odometry_out_topic_name;
 std::string joint_state_topic_name;
 std::string odometry_frame_id;
 std::string odometry_child_frame_id;
@@ -106,6 +102,7 @@ std::string joint_state_frame_id;
 
 ros::Time current_time, last_time;
 ros::Publisher odom_pub;
+
 // Declare sensor callback functions
 void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
 void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg);
@@ -187,12 +184,6 @@ int main(int argc, char **argv) {
     ros::shutdown();
     exit(1);
   }
-  // if(ros::param::get(node_name+"/kimera_odometry_out_topic_name",kimera_odometry_out_topic_name)==false)
-  // {
-  //   ROS_FATAL("No parameter 'kimera_odometry_out_topic_name' specified");
-  //   ros::shutdown();
-  //   exit(1);
-  // }
   if (ros::param::get(node_name + "/joint_state_topic_name", joint_state_topic_name) == false)
   {
     ROS_FATAL("No parameter 'joint_state_topic_name' specified");
@@ -217,28 +208,16 @@ int main(int argc, char **argv) {
     ros::shutdown();
     exit(1);
   }
-  nav_msgs::Odometry odom_msg; // Initializes to all zero, by default
+  nav_msgs::Odometry odom_msg;
 
   // Initialize publishers and subscribers
   imu_sub = nh.subscribe(imu_topic_name, 1, imuCallback);
   joint_state_sub = nh.subscribe(joint_state_topic_name, 1, jointstateCallback);
-  // ros::Subscriber true_pose_sub = nh.subscribe("/posUpdate", 1,
-  // posUpdateCallback);
-
   odom_pub = nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
-  // tf::TransformBroadcaster odom_broadcaster;
-  // tf::TransformListener tf_listener_;
 
-  // Initialize states
-  // nav_msgs::Odometry odom_msg; // Initializes to all zero, by default
-  // nav_msgs::Odometry kimera_odom_msg;
-  // ros::Rate rate(loop_rate);
 
   current_time = ros::Time::now();
   last_time = ros::Time::now();
-  // double delta_time = 0.0;
-  // double first_loop = true;
-  // uint32_t seq = 0;
   delta_x = 0.0;
   delta_y = 0.0;
   delta_z = 0.0;
@@ -255,7 +234,7 @@ int main(int argc, char **argv) {
   angular = 0.0;
   front_steering_angle = 0.0;
   rear_steering_angle = 0.0;
-  first_loop = false;
+  // first_loop = false;
   odom_msg.pose.pose.position.x = initPosx;
   odom_msg.pose.pose.position.y = initPosy;
   odom_msg.pose.pose.position.z = initPosz;
@@ -267,7 +246,7 @@ int main(int argc, char **argv) {
 
 void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
   current_time = ros::Time::now();
-  double delta_time = (current_time - last_time).toSec();
+
   int fr_wheel_joint_idx;
   int br_wheel_joint_idx;
   int fl_wheel_joint_idx;
@@ -324,6 +303,16 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
   bl_wheel_vel = msg->velocity[bl_wheel_joint_idx];
   bl_wheel_steer = msg->position[bl_steering_arm_joint_idx];
 
+  if (std::isnan(fl_wheel_vel) || std::isnan(fr_wheel_vel) || std::isnan(bl_wheel_vel) || std::isnan(br_wheel_vel))
+  {
+  return;
+  }
+  if (std::isnan(fl_wheel_steer) || std::isnan(fr_wheel_steer) || std::isnan(bl_wheel_steer) || std::isnan(br_wheel_steer))
+  {
+  return;
+  }
+
+
   front_steering_angle = atan(2*tan(fl_wheel_steer)*tan(fr_wheel_steer)/(tan(fl_wheel_steer) + tan(fr_wheel_steer)));
   if (fabs(tan(fl_wheel_steer) + tan(fr_wheel_steer)) < 0.001) {
     front_steering_angle = 0;
@@ -357,7 +346,7 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
 
   velocity_x = (front_linear_speed * cos(front_steering_angle) + rear_linear_speed * cos(rear_steering_angle)) / 2.0; // robot_body_vel*cos(yaw);
   velocity_y = (front_linear_speed * sin(front_steering_angle) + rear_linear_speed * sin(rear_steering_angle)) / 2.0;
-  if ((fabs(fl_wheel_steer) + fabs(fr_wheel_steer)) > PI/3 && fabs(fl_wheel_steer + fr_wheel_steer) < PI/10) {
+  if ((fabs(fl_wheel_steer) + fabs(fr_wheel_steer)) > 85*PI/180 && fabs(fl_wheel_steer + fr_wheel_steer) < 5*PI/180) {
     velocity_x = 0;
     velocity_y = 0;
   }
@@ -365,7 +354,11 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
 
   // delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
   // delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
-
+  double delta_time = (current_time - last_time).toSec();
+  if (delta_time<0.0001)
+  {
+    return;
+  }
   delta_x = ((velocity_x * cos(yaw) - velocity_y * sin(yaw))) * delta_time;
   delta_y = ((velocity_x * sin(yaw) + velocity_y * cos(yaw))) * delta_time;
   heading += angular * delta_time;
