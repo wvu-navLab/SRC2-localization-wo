@@ -360,8 +360,8 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
 
   delta_yaw = 0.0;
   nav_msgs::Odometry odom_msg;
-  tf::TransformBroadcaster odom_broadcaster;
-  tf::TransformListener tf_listener_;
+  // tf::TransformBroadcaster odom_broadcaster;
+  // tf::TransformListener tf_listener_;
 
   // geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
   geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(yaw);
@@ -382,7 +382,9 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
   odom_msg.twist.twist.angular.y = 0.0;
   odom_msg.twist.twist.angular.z = yaw_rate;
 
-  if (std::isnan(delta_x) || std::isnan(delta_y) || std::isnan(yaw) || std::isnan(velocity_x) || std::isnan(velocity_y) || std::isnan(yaw_rate))
+
+  if (std::isnan(delta_x) || std::isnan(delta_y) || std::isnan(yaw) || std::isnan(velocity_x) ||
+  std::isnan(velocity_y) || std::isnan(yaw_rate) || std::isnan(odom_quat.z) || std::isnan(odom_quat.w))
   {
     ROS_FATAL("NaN parameters. Restarting WO");
     ros::shutdown();
