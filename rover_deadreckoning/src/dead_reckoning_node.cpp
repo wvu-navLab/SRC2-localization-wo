@@ -14,7 +14,6 @@
 // Declare sensor data variables
 double fl_wheel_turn_counts = 0.0;
 double fl_wheel_turn_counts_prev = 0.0;
-double fl_delta_counts = 0.0;
 double fl_wheel_steer = 0.0;
 double fr_wheel_steer = 0.0;
 double bl_wheel_steer = 0.0;
@@ -22,7 +21,6 @@ double br_wheel_steer = 0.0;
 double fl_wheel_vel = 0.0;
 double bl_wheel_turn_counts = 0.0;
 double bl_wheel_turn_counts_prev = 0.0;
-double bl_delta_counts = 0.0;
 double bl_wheel_vel = 0.0;
 double fr_wheel_turn_counts = 0.0;
 double fr_wheel_turn_counts_prev = 0.0;
@@ -30,38 +28,18 @@ double fr_delta_counts = 0.0;
 double fr_wheel_vel = 0.0;
 double br_wheel_turn_counts = 0.0;
 double br_wheel_turn_counts_prev = 0.0;
-double br_delta_counts = 0.0;
 double br_wheel_vel = 0.0;
 double yaw_rate = 0.0;
 double yaw_rate_prev = 0.0;
-double pitch_rate = 0.0;
-double pitch_rate_prev = 0.0;
 double delta_yaw = 0.0;
-double delta_pitch = 0.0;
-double roll_rate = 0.0;
-double roll_rate_prev = 0.0;
-double delta_roll = 0.0;
 double imu_time;
 double imu_time_prev;
 double yaw = 0.0;
 double heading = 0.0;
-double pitch = 0.0;
-double roll = 0.0;
-double pitchAcc = 0.0;
-double rollAcc = 0.0;
-double pos_x = 0.0;
-double pos_y = 0.0;
-double pos_z = 0.0;
-double orient_x = 0.0;
-double orient_y = 0.0;
-double orient_z = 0.0;
-double orient_w = 1.0;
 double delta_x = 0.0;
 double delta_y = 0.0;
-double delta_z = 0.0;
 double velocity_x = 0.0;
 double velocity_y = 0.0;
-double velocity_z = 0.0;
 double linear_vel = 0.0;
 double front_steering_angle = 0.0;
 double rear_steering_angle = 0.0;
@@ -78,19 +56,11 @@ double rear_left_tmp = 0.0;
 double rear_right_tmp = 0.0;
 double bl_speed_tmp = 0.0;
 double br_speed_tmp = 0.0;
-float loop_rate;                // Hz
 double wheel_diameter;          // m
 double wheel_base;              // m
 double steering_track;          // m
 double wheel_steering_y_offset; // m
-double initPosx;                // m
-double initPosy;                // m
-double initPosz;                // m
-double initYaw;                 // rad
-double initPitch;               // rad
-double initRoll;                // rad
 double delta_time = 0.0;
-// double first_loop = true;
 bool first_callback = true;
 uint32_t seq = 0;
 std::string imu_topic_name;
@@ -132,39 +102,8 @@ int main(int argc, char **argv) {
     ros::shutdown();
     exit(1);
   }
-  if (ros::param::get(node_name + "/wheel_steering_y_offset",
-                      wheel_steering_y_offset) == false) {
+  if (ros::param::get(node_name + "/wheel_steering_y_offset", wheel_steering_y_offset) == false) {
     ROS_FATAL("No parameter 'wheel_steering_y_offset' specified");
-    ros::shutdown();
-    exit(1);
-  }
-  if (ros::param::get(node_name + "/initPosx", initPosx) == false) {
-    ROS_FATAL("No parameter 'initPosx' specified");
-    ros::shutdown();
-    exit(1);
-  }
-  if (ros::param::get(node_name + "/initPosy", initPosy) == false) {
-    ROS_FATAL("No parameter 'initPosy' specified");
-    ros::shutdown();
-    exit(1);
-  }
-  if (ros::param::get(node_name + "/initPosz", initPosz) == false) {
-    ROS_FATAL("No parameter 'initPosz' specified");
-    ros::shutdown();
-    exit(1);
-  }
-  if (ros::param::get(node_name + "/initYaw", initYaw) == false) {
-    ROS_FATAL("No parameter 'initYaw' specified");
-    ros::shutdown();
-    exit(1);
-  }
-  if (ros::param::get(node_name + "/initPitch", initPitch) == false) {
-    ROS_FATAL("No parameter 'initPitch' specified");
-    ros::shutdown();
-    exit(1);
-  }
-  if (ros::param::get(node_name + "/initRoll", initRoll) == false) {
-    ROS_FATAL("No parameter 'initRoll' specified");
     ros::shutdown();
     exit(1);
   }
@@ -173,32 +112,27 @@ int main(int argc, char **argv) {
     ros::shutdown();
     exit(1);
   }
-  if (ros::param::get(node_name + "/odometry_out_topic_name",
-                      odometry_out_topic_name) == false) {
+  if (ros::param::get(node_name + "/odometry_out_topic_name", odometry_out_topic_name) == false) {
     ROS_FATAL("No parameter 'odometry_out_topic_name' specified");
     ros::shutdown();
     exit(1);
   }
-  if (ros::param::get(node_name + "/joint_state_topic_name", joint_state_topic_name) == false)
-  {
+  if (ros::param::get(node_name + "/joint_state_topic_name", joint_state_topic_name) == false){
     ROS_FATAL("No parameter 'joint_state_topic_name' specified");
     ros::shutdown();
     exit(1);
   }
-  if (ros::param::get(node_name + "/odometry_frame_id", odometry_frame_id) == false)
-  {
+  if (ros::param::get(node_name + "/odometry_frame_id", odometry_frame_id) == false){
     ROS_FATAL("No parameter 'odometry_frame_id' specified");
     ros::shutdown();
     exit(1);
   }
-  if (ros::param::get(node_name + "/odometry_child_frame_id", odometry_child_frame_id) == false)
-  {
+  if (ros::param::get(node_name + "/odometry_child_frame_id", odometry_child_frame_id) == false){
     ROS_FATAL("No parameter 'odometry_child_frame_id' specified");
     ros::shutdown();
     exit(1);
   }
-  if (ros::param::get(node_name + "/joint_state_frame_id", joint_state_frame_id) == false)
-  {
+  if (ros::param::get(node_name + "/joint_state_frame_id", joint_state_frame_id) == false){
     ROS_FATAL("No parameter 'joint_state_frame_id' specified");
     ros::shutdown();
     exit(1);
@@ -210,30 +144,21 @@ int main(int argc, char **argv) {
   joint_state_sub = nh.subscribe(joint_state_topic_name, 1, jointstateCallback);
   odom_pub = nh.advertise<nav_msgs::Odometry>(odometry_out_topic_name, 1);
 
-
   current_time = ros::Time::now();
   last_time = ros::Time::now();
-  delta_x = 0.0;
-  delta_y = 0.0;
-  delta_z = 0.0;
+
   delta_yaw = 0.0;
-  delta_pitch = 0.0;
-  delta_roll = 0.0;
-  yaw = initYaw; // initialize yaw
-  pitch = initPitch;
-  roll = initRoll;
+  yaw = 0.0; // initialize yaw
   velocity_x = 0.0;
   velocity_y = 0.0;
-  velocity_z = 0.0;
   linear_vel = 0.0;
   angular = 0.0;
   front_steering_angle = 0.0;
   rear_steering_angle = 0.0;
-  // first_loop = false;
-  odom_msg.pose.pose.position.x = initPosx;
-  odom_msg.pose.pose.position.y = initPosy;
-  odom_msg.pose.pose.position.z = initPosz;
-  odom_msg.pose.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(initRoll, initPitch, initYaw);
+  odom_msg.pose.pose.position.x = 0.0;
+  odom_msg.pose.pose.position.y = 0.0;
+  odom_msg.pose.pose.position.z = 0.0;
+  odom_msg.pose.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
 
   ros::spin();
   return 0;
@@ -298,14 +223,14 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
   bl_wheel_vel = msg->velocity[bl_wheel_joint_idx];
   bl_wheel_steer = msg->position[bl_steering_arm_joint_idx];
 
-  if (std::isnan(fl_wheel_vel) || std::isnan(fr_wheel_vel) || std::isnan(bl_wheel_vel) || std::isnan(br_wheel_vel))
-  {
+if (std::isnan(fl_wheel_vel) || std::isnan(fr_wheel_vel) ||
+    std::isnan(bl_wheel_vel) || std::isnan(br_wheel_vel)) {
   return;
-  }
-  if (std::isnan(fl_wheel_steer) || std::isnan(fr_wheel_steer) || std::isnan(bl_wheel_steer) || std::isnan(br_wheel_steer))
-  {
+}
+if (std::isnan(fl_wheel_steer) || std::isnan(fr_wheel_steer) ||
+    std::isnan(bl_wheel_steer) || std::isnan(br_wheel_steer)) {
   return;
-  }
+}
 
 
   front_steering_angle = atan(2*tan(fl_wheel_steer)*tan(fr_wheel_steer)/(tan(fl_wheel_steer) + tan(fr_wheel_steer)));
@@ -336,8 +261,6 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
   angular = (front_linear_speed * front_tmp + rear_linear_speed * rear_tmp) / 2.0; // wheel speed
 
   yaw += delta_yaw; // imu
-  pitch = delta_pitch;
-  roll = delta_roll;
 
   velocity_x = (front_linear_speed * cos(front_steering_angle) + rear_linear_speed * cos(rear_steering_angle)) / 2.0; // robot_body_vel*cos(yaw);
   velocity_y = (front_linear_speed * sin(front_steering_angle) + rear_linear_speed * sin(rear_steering_angle)) / 2.0;
@@ -347,99 +270,63 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
   }
   linear_vel = copysign(1.0, rear_linear_speed) * sqrt(pow(velocity_x, 2) + pow(velocity_y, 2));
 
-  // delta_x=((velocity_x*cos(yaw)-velocity_y*sin(yaw)))*delta_time;
-  // delta_y=((velocity_x*sin(yaw)+velocity_y*cos(yaw)))*delta_time;
-  double delta_time = (current_time - last_time).toSec();
-  if (delta_time<0.0001)
-  {
-    return;
-  }
-  delta_x = ((velocity_x * cos(yaw) - velocity_y * sin(yaw))) * delta_time;
-  delta_y = ((velocity_x * sin(yaw) + velocity_y * cos(yaw))) * delta_time;
-  heading += angular * delta_time;
 
-  delta_yaw = 0.0;
-  nav_msgs::Odometry odom_msg;
-  // tf::TransformBroadcaster odom_broadcaster;
-  // tf::TransformListener tf_listener_;
+double delta_time = (current_time - last_time).toSec();
+if (delta_time < 0.0001) {
+  return;
+}
+delta_x += ((velocity_x * cos(yaw) - velocity_y * sin(yaw))) * delta_time;
+delta_y += ((velocity_x * sin(yaw) + velocity_y * cos(yaw))) * delta_time;
+heading += angular * delta_time;
 
-  // geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromRollPitchYaw(roll, pitch, yaw);
-  geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(yaw);
+delta_yaw = 0.0;
+nav_msgs::Odometry odom_msg;
 
-  // odom publisher
-  odom_msg.header.seq = seq;
-  odom_msg.header.stamp = current_time;
-  odom_msg.header.frame_id = odometry_frame_id;
-  odom_msg.pose.pose.position.x += delta_x;
-  odom_msg.pose.pose.position.y += delta_y;
-  odom_msg.pose.pose.position.z += 0.0;
-  odom_msg.pose.pose.orientation = odom_quat;
-  odom_msg.child_frame_id = odometry_child_frame_id;
-  odom_msg.twist.twist.linear.x = velocity_x;
-  odom_msg.twist.twist.linear.y = velocity_y;
-  odom_msg.twist.twist.linear.z = 0.0;
-  odom_msg.twist.twist.angular.x = 0.0;
-  odom_msg.twist.twist.angular.y = 0.0;
-  odom_msg.twist.twist.angular.z = yaw_rate;
+geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(yaw);
 
+// odom publisher
+odom_msg.header.seq = seq;
+odom_msg.header.stamp = current_time;
+odom_msg.header.frame_id = odometry_frame_id;
+odom_msg.pose.pose.position.x = delta_x;
+odom_msg.pose.pose.position.y = delta_y;
+odom_msg.pose.pose.position.z = 0.0;
+odom_msg.pose.pose.orientation = odom_quat;
+odom_msg.child_frame_id = odometry_child_frame_id;
+odom_msg.twist.twist.linear.x = velocity_x;
+odom_msg.twist.twist.linear.y = velocity_y;
+odom_msg.twist.twist.linear.z = 0.0;
+odom_msg.twist.twist.angular.x = 0.0;
+odom_msg.twist.twist.angular.y = 0.0;
+odom_msg.twist.twist.angular.z = yaw_rate;
 
-  if (std::isnan(delta_x) || std::isnan(delta_y) || std::isnan(yaw) || std::isnan(velocity_x) ||
-  std::isnan(velocity_y) || std::isnan(yaw_rate) || std::isnan(odom_quat.z) || std::isnan(odom_quat.w))
-  {
-    ROS_FATAL("NaN parameters. Restarting WO");
-    ros::shutdown();
-  }
-  else
-  {
-    odom_pub.publish(odom_msg);
-  }
+if (std::isnan(delta_x) || std::isnan(delta_y) || std::isnan(yaw) ||
+    std::isnan(velocity_x) || std::isnan(velocity_y) || std::isnan(yaw_rate) ||
+    std::isnan(odom_quat.z) || std::isnan(odom_quat.w)) {
+  ROS_FATAL("NaN parameters. Restarting WO");
+  ros::shutdown();
+} else {
+  odom_pub.publish(odom_msg);
+}
 
-
-
-  last_time = current_time;
-
+last_time = current_time;
 }
 
 void imuCallback(const sensor_msgs::Imu::ConstPtr &msg) {
   imu_time_prev = imu_time;
   imu_time = ros::Time::now().toSec();
   double delta_imu_time = imu_time - imu_time_prev;
-  if (delta_imu_time<0.0001)
-  {
-  return;
+  if (delta_imu_time < 0.0001) {
+    return;
   }
   yaw_rate_prev = yaw_rate;
   yaw_rate = msg->angular_velocity.z;
 
-  // double accX = msg->linear_acceleration.x;
-  // double accY = msg->linear_acceleration.y;
-  // double accZ = msg->linear_acceleration.z;
-
-  // double rollAcc = atan2(accY, accZ);
-  // double pitchAcc = atan2(-accX, sqrt(accY * accY + accZ * accZ));
-
-  // double rollOrient, pitchOrient, yawOrient;
-  //
-  // tf::Quaternion q(msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
-  //
-  // tf::Matrix3x3 m(q);
-  // m.getRPY(rollOrient, pitchOrient, yawOrient);
-
   if (first_callback) {
-
     delta_yaw = 0.0;
-    // roll_rate = 0.0;
-    // pitch_rate = 0.0;
-
     first_callback = false;
+
   } else {
     delta_yaw = ((yaw_rate + yaw_rate_prev) / 2.0) * (delta_imu_time);
-    // delta_pitch = pitchAcc;
-    // delta_roll = rollAcc;
-    // // roll_rate_prev = roll_rate;
-    // roll_rate = rollAcc / (delta_imu_time);
-    //
-    // // pitch_rate_prev =pitch_rate;
-    // pitch_rate = pitchAcc / (delta_imu_time);
   }
 }
