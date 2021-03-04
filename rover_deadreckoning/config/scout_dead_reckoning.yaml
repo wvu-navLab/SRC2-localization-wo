@@ -2,9 +2,9 @@ wheel_diameter : 0.55
 wheel_base: 1.5748
 steering_track: 1.82
 wheel_steering_y_offset: 0.022225
-imu_topic_name : "/scout_1/imu_filtered"
+imu_topic_name : "/small_scout_1/imu"
 odometry_out_topic_name : "/scout_1/dead_reckoning/odometry"
-joint_state_topic_name : "/scout_1/joint_states"
-odometry_frame_id : "scout_1_tf/odom"
-odometry_child_frame_id : "scout_1_tf/base_footprint"
-joint_state_frame_id : "scout_1_tf/chassis"
+joint_state_topic_name : "/small_scout_1/joint_states"
+odometry_frame_id : "small_scout_1_odom"
+odometry_child_frame_id : "small_scout_1_base_footprint"
+joint_state_frame_id : "small_scout_1_chassis"

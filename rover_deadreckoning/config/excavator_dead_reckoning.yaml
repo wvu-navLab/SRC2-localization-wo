@@ -9,10 +9,10 @@ initPosz: 0.0
 initRoll: 0.0
 initPitch: 0.0
 initYaw: 0.0
-imu_topic_name : "/excavator_1/imu"
+imu_topic_name : "/small_excavator_1/imu"
 odometry_out_topic_name : "/excavator_1/dead_reckoning/odometry"
 # kimera_odometry_out_topic_name : "/excavator_1/dead_reckoning/true_pose"
-joint_state_topic_name : "/excavator_1/joint_states"
-odometry_frame_id : "excavator_1_tf/odom"
-odometry_child_frame_id : "excavator_1_tf/base_footprint"
-joint_state_frame_id : "excavator_1_tf/chassis"
+joint_state_topic_name : "/small_excavator_1/joint_states"
+odometry_frame_id : "small_excavator_1_odom"
+odometry_child_frame_id : "small_excavator_1_base_footprint"
+joint_state_frame_id : "small_excavator_1_chassis"

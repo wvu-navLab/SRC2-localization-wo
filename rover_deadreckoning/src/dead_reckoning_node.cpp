@@ -189,16 +189,16 @@ void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
     if (msg->name[i] == "bl_wheel_joint") {
       bl_wheel_joint_idx = i;
     }
-    if (msg->name[i] == "fr_steering_arm_joint") {
+    if (msg->name[i] == "fr_steering_arm_tibia_joint") {
       fr_steering_arm_joint_idx = i;
     }
-    if (msg->name[i] == "br_steering_arm_joint") {
+    if (msg->name[i] == "br_steering_arm_tibia_joint") {
       br_steering_arm_joint_idx = i;
     }
-    if (msg->name[i] == "fl_steering_arm_joint") {
+    if (msg->name[i] == "fl_steering_arm_tibia_joint") {
       fl_steering_arm_joint_idx = i;
     }
-    if (msg->name[i] == "bl_steering_arm_joint") {
+    if (msg->name[i] == "bl_steering_arm_tibia_joint") {
       bl_steering_arm_joint_idx = i;
     }
   }
