@@ -1,7 +1,7 @@
 loop_rate : 10.0
-wheel_diameter : 0.55
-wheel_base: 1.0 #TODO:check this
-steering_track: 1.076 #TODO:check this
+wheel_diameter : 0.34
+wheel_base: 1.070
+steering_track: 1.0
 wheel_steering_y_offset: 0.0
 initPosx: 0.0
 initPosy: 0.0
