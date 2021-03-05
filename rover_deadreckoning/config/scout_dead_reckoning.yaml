@@ -1,7 +1,7 @@
 wheel_diameter : 0.55
-wheel_base: 1.5748
-steering_track: 1.82
-wheel_steering_y_offset: 0.022225
+wheel_base: 1.0
+steering_track: 1.060
+wheel_steering_y_offset: 0.0
 imu_topic_name : "/small_scout_1/imu_filtered"
 odometry_out_topic_name : "/small_scout_1/dead_reckoning/odometry"
 joint_state_topic_name : "/small_scout_1/joint_states"
