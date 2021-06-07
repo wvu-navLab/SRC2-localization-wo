@@ -1,0 +1,17 @@
+wheel_diameter : 0.34
+wheel_base: 1.070
+steering_track: 1.0
+wheel_steering_y_offset: 0.0
+initPosx: 0.0
+initPosy: 0.0
+initPosz: 0.0
+initRoll: 0.0
+initPitch: 0.0
+initYaw: 0.0
+imu_topic_name : "imu"
+odometry_out_topic_name : "dead_reckoning/odometry"
+# kimera_odometry_out_topic_name : "/hauler_1/dead_reckoning/true_pose"
+joint_state_topic_name : "joint_states"
+odometry_frame_id : "_odom"
+odometry_child_frame_id : "_base_footprint"
+joint_state_frame_id : "_1_chassis"

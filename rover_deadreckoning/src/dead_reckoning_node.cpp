@@ -84,9 +84,15 @@ int main(int argc, char **argv) {
   ros::NodeHandle nh;
 
 
+  std::string robot_name;
   ros::Subscriber imu_sub, joint_state_sub;
 
   // Read params from yaml file
+  if (ros::param::get(robot_name + "robot_name", robot_name) == false) {
+    ROS_FATAL("No parameter 'robot_name' specified");
+    ros::shutdown();
+    exit(1);
+  }
   if (ros::param::get(node_name + "/wheel_diameter", wheel_diameter) == false) {
     ROS_FATAL("No parameter 'wheel_diameter' specified");
     ros::shutdown();
@@ -127,16 +133,19 @@ int main(int argc, char **argv) {
     ros::shutdown();
     exit(1);
   }
+  odometry_frame_id = robot_name + odometry_frame_id;
   if (ros::param::get(node_name + "/odometry_child_frame_id", odometry_child_frame_id) == false){
     ROS_FATAL("No parameter 'odometry_child_frame_id' specified");
     ros::shutdown();
     exit(1);
   }
+  odometry_child_frame_id = odometry_child_frame_id + odometry_frame_id;
   if (ros::param::get(node_name + "/joint_state_frame_id", joint_state_frame_id) == false){
     ROS_FATAL("No parameter 'joint_state_frame_id' specified");
     ros::shutdown();
     exit(1);
   }
+  joint_state_frame_id = joint_state_frame_id + odometry_frame_id;
   nav_msgs::Odometry odom_msg;
 
   // Initialize publishers and subscribers

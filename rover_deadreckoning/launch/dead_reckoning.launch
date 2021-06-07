@@ -1,13 +1,10 @@
 <?xml version="1.0"?>
 <launch>
-  <group ns="small_hauler_1">
-   <param name="/use_sim_time" value="true"/>
    <node name="rover_dead_reckoning_node" pkg="rover_deadreckoning" type="rover_dead_reckoning_node" output="screen">
      <rosparam
       command="load"
-      file="$(find rover_deadreckoning)/config/hauler_dead_reckoning.yaml"
+      file="$(find rover_deadreckoning)/config/config.yaml"
       subst_value="true"
      />
    </node>
-  </group>
 </launch>
