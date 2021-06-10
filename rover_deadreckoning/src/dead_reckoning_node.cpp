@@ -317,10 +317,9 @@ if (std::isnan(delta_x) || std::isnan(delta_y) || std::isnan(yaw) ||
   ROS_FATAL("NaN parameters. Restarting WO");
   ros::shutdown();
 } else {
-  if(!highTurn){ // dont publish WO if 90 deg turn
+ 
 
-    odom_pub.publish(odom_msg);
-  }
+  odom_pub.publish(odom_msg);
 }
 
 last_time = current_time;
