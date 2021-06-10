@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
 
 void jointstateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
   current_time = ros::Time::now();
-
+  bool highTurn = false;
   int fr_wheel_joint_idx;
   int br_wheel_joint_idx;
   int fl_wheel_joint_idx;
@@ -276,6 +276,8 @@ if (std::isnan(fl_wheel_steer) || std::isnan(fr_wheel_steer) ||
   if ((fabs(fl_wheel_steer) + fabs(fr_wheel_steer)) > 85*PI/180 && fabs(fl_wheel_steer + fr_wheel_steer) < 5*PI/180) {
     velocity_x = 0;
     velocity_y = 0;
+    highTurn = true;
+
   }
   linear_vel = copysign(1.0, rear_linear_speed) * sqrt(pow(velocity_x, 2) + pow(velocity_y, 2));
 
@@ -315,7 +317,10 @@ if (std::isnan(delta_x) || std::isnan(delta_y) || std::isnan(yaw) ||
   ROS_FATAL("NaN parameters. Restarting WO");
   ros::shutdown();
 } else {
-  odom_pub.publish(odom_msg);
+  if(!highTurn){ // dont publish WO if 90 deg turn
+
+    odom_pub.publish(odom_msg);
+  }
 }
 
 last_time = current_time;
