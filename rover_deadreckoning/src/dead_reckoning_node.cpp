@@ -243,6 +243,7 @@ if (std::isnan(fl_wheel_steer) || std::isnan(fr_wheel_steer) ||
 
 
   front_steering_angle = atan(2*tan(fl_wheel_steer)*tan(fr_wheel_steer)/(tan(fl_wheel_steer) + tan(fr_wheel_steer)));
+  // front_steering_angle = atan(2*tan(fl_wheel_steer)*tan(fr_wheel_steer)/(sin(fl_wheel_steer)/cos(fl_wheel_steer) + sin(fr_wheel_steer)/cos(fr_wheel_steer)));
   if (fabs(tan(fl_wheel_steer) + tan(fr_wheel_steer)) < 0.001) {
     front_steering_angle = 0;
   }
@@ -277,7 +278,12 @@ if (std::isnan(fl_wheel_steer) || std::isnan(fr_wheel_steer) ||
     velocity_x = 0;
     velocity_y = 0;
     highTurn = true;
-
+  }
+  if ((fabs(fl_wheel_steer) + fabs(fr_wheel_steer)) > 178*PI/180)
+  {
+    velocity_x = 0;
+    // velocity_y = (front_linear_speed * sin(front_steering_angle) + rear_linear_speed * sin(rear_steering_angle)) / 2.0;
+    velocity_y = (front_linear_speed * copysign(M_PI_2,fl_wheel_steer) + rear_linear_speed * copysign(M_PI_2,br_wheel_steer)) / 2.0;
   }
   linear_vel = copysign(1.0, rear_linear_speed) * sqrt(pow(velocity_x, 2) + pow(velocity_y, 2));
 
@@ -317,7 +323,7 @@ if (std::isnan(delta_x) || std::isnan(delta_y) || std::isnan(yaw) ||
   ROS_FATAL("NaN parameters. Restarting WO");
   ros::shutdown();
 } else {
- 
+
 
   odom_pub.publish(odom_msg);
 }
