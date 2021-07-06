@@ -189,6 +189,16 @@ add_dependencies(rover_dead_reckoning_node ${${PROJECT_NAME}_EXPORTED_TARGETS} $
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
+install(TARGETS rover_dead_reckoning_node
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
+install(DIRECTORY launch/
+   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+   PATTERN ".svn" EXCLUDE)
+
+   install(DIRECTORY config/
+       DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
+       PATTERN ".svn" EXCLUDE)
 #############
 ## Testing ##
 #############
