@@ -9,8 +9,7 @@ initRoll: 0.0
 initPitch: 0.0
 initYaw: 0.0
 imu_topic_name : "imu"
-odometry_out_topic_name : "dead_reckoning/odometry"
-# kimera_odometry_out_topic_name : "/hauler_1/dead_reckoning/true_pose"
+odometry_out_topic_name : "localization/odometry/dead_reckoning"
 joint_state_topic_name : "joint_states"
 odometry_frame_id : "_odom"
 odometry_child_frame_id : "_base_footprint"
